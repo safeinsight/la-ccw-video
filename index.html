@@ -1401,7 +1401,7 @@ input {
 
         <div id="administratorToolbar" class="toolbarView">
             <button class="toolbarButton redButton" id="adminChatButton">Chat</button>
-            <button class="toolbarButton" id="adminCameraButton">Camera</button>
+            <button class="toolbarButton" id="adminCameraButton">Camera OFF</button>
             <button class="toolbarButton redButton" id="leaveButton">EXIT ROOM</button>
             <button class="toolbarButton" id="micButton">Mic</button>
             <button class="toolbarButton redButton" id="adminPanelButton">Participants</button>
@@ -1739,7 +1739,7 @@ function updateAdminCameraButton(text){
 
     adminCameraButton.classList.toggle(
         "logoActive",
-        text === "Show Logo"
+        text === "Cam ON"
     );
 
 }
@@ -3029,7 +3029,7 @@ adminCameraButton.addEventListener(
                 administratorCameraOn =
                     true;
 
-                updateAdminCameraButton("Show Logo");
+                updateAdminCameraButton("Cam ON");
                 
                 updateAdministratorCameraStatus();
 
@@ -3073,7 +3073,7 @@ adminCameraButton.addEventListener(
             administratorCameraOn =
                 false;
 
-            updateAdminCameraButton("Show Camera");
+            updateAdminCameraButton("Camera OFF");
            
             updateAdministratorCameraStatus();
 
