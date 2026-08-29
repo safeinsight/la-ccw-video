@@ -985,8 +985,98 @@ input {
 .chatCloseButton { border:0; background:transparent; color:#fff; cursor:pointer; font-size:18px; }
 .adminChatRecipients { padding:10px; border-bottom:1px solid #444; max-height:180px; overflow-y:auto; }
 .chatRecipientsTitle { font-weight:bold; margin-bottom:8px; }
-.chatRecipient { display:flex; align-items:center; gap:8px; padding:5px 0; }
-.chatRecipient input { width:16px; height:16px; }
+.chatRecipientBranch {
+    position:relative;
+    margin:0 0 8px 8px;
+    padding-left:18px;
+}
+
+.chatRecipientBranch::before {
+    content:"";
+    position:absolute;
+    left:0;
+    top:0;
+    bottom:8px;
+    width:1px;
+    background:#555;
+}
+
+.chatRecipientBranch::after {
+    content:"";
+    position:absolute;
+    left:0;
+    top:17px;
+    width:12px;
+    height:1px;
+    background:#555;
+}
+
+.chatRecipient {
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:5px 7px;
+    border-radius:5px;
+    background:#252525;
+    cursor:pointer;
+}
+
+.chatRecipient:hover { background:#303030; }
+.chatRecipient input { width:16px; height:16px; flex:0 0 auto; }
+
+.chatRecipientName {
+    flex:1;
+    font-weight:bold;
+}
+
+.chatThreadBadge {
+    min-width:22px;
+    height:20px;
+    padding:2px 6px;
+    border-radius:10px;
+    background:#444;
+    color:#ccc;
+    font-size:10px;
+    text-align:center;
+}
+
+.chatThreadPreview {
+    display:block;
+    margin:4px 0 0 25px;
+    color:#999;
+    font-size:11px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.chatThread {
+    display:none;
+    margin:5px 0 0 25px;
+    padding:7px;
+    max-height:150px;
+    overflow-y:auto;
+    background:#111;
+    border-left:2px solid #444;
+    border-radius:0 5px 5px 0;
+}
+
+.chatThread.open { display:block; }
+
+.chatThreadMessage {
+    padding:5px 6px;
+    margin-bottom:5px;
+    background:#292929;
+    border-radius:4px;
+    font-size:11px;
+    word-break:break-word;
+}
+
+.chatThreadMessage.mine { background:#075e54; }
+.chatThreadMessageMeta { color:#aaa; font-size:9px; margin-bottom:2px; }
+.chatThreadEmpty { color:#777; font-size:10px; font-style:italic; }
+
 .chatMessages { flex:1; min-height:0; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:7px; }
 .chatMessage { max-width:88%; padding:8px 10px; border-radius:7px; background:#292929; word-break:break-word; }
 .chatMessage.mine { align-self:flex-end; background:#075e54; }
@@ -4137,6 +4227,8 @@ await supabaseClient
 
 let chatChannel = null;
 let adminSelectedChatParticipants = new Set();
+let adminChatThreads = {};
+let openAdminChatThread = null;
 
 function initializeChat(){
 
@@ -4149,7 +4241,17 @@ function initializeChat(){
 
             if(isAdministrator){
                 if(message.recipientId === "ADMIN" || message.senderId !== "ADMIN"){
-                    appendChatMessage(adminChatMessages, message.senderId === "ADMIN", message.senderName || "Participant", message.text);
+                    const senderId = String(message.senderId || "");
+                    if(senderId !== "ADMIN"){
+                        if(!adminChatThreads[senderId]) adminChatThreads[senderId] = [];
+                        adminChatThreads[senderId].push({
+                            mine:false,
+                            senderName:message.senderName || "Participant",
+                            text:message.text
+                        });
+                    }
+                    appendChatMessage(adminChatMessages, false, message.senderName || "Participant", message.text);
+                    renderAdminChatRecipients();
                 }
             }else{
                 if(message.recipientId === window.myParticipantId){
@@ -4171,28 +4273,81 @@ function appendChatMessage(container, mine, senderName, text){
 
 function renderAdminChatRecipients(){
     if(!adminChatRecipients){ return; }
+
     adminChatRecipients.innerHTML = "";
+
     if(participants.length === 0){
         adminChatRecipients.innerHTML = '<div style="color:#777;">No active participants.</div>';
         return;
     }
+
     participants.forEach(function(participant){
+        const id = String(participant.id);
+        const messages = adminChatThreads[id] || [];
+
+        const branch = document.createElement("div");
+        branch.className = "chatRecipientBranch";
+
         const label = document.createElement("label");
         label.className = "chatRecipient";
+
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
-        checkbox.value = participant.id;
-        checkbox.checked = adminSelectedChatParticipants.has(String(participant.id));
+        checkbox.value = id;
+        checkbox.checked = adminSelectedChatParticipants.has(id);
+        checkbox.addEventListener("click", function(event){
+            event.stopPropagation();
+        });
         checkbox.addEventListener("change", function(){
-            const id = String(participant.id);
             if(this.checked) adminSelectedChatParticipants.add(id);
             else adminSelectedChatParticipants.delete(id);
         });
-        const text = document.createElement("span");
-        text.textContent = participant.name;
+
+        const name = document.createElement("span");
+        name.className = "chatRecipientName";
+        name.textContent = participant.name;
+
+        const badge = document.createElement("span");
+        badge.className = "chatThreadBadge";
+        badge.textContent = messages.length;
+        badge.title = messages.length + " message" + (messages.length === 1 ? "" : "s");
+
         label.appendChild(checkbox);
-        label.appendChild(text);
-        adminChatRecipients.appendChild(label);
+        label.appendChild(name);
+        label.appendChild(badge);
+
+        const preview = document.createElement("span");
+        preview.className = "chatThreadPreview";
+        if(messages.length){
+            const last = messages[messages.length - 1];
+            preview.textContent = (last.mine ? "You: " : last.senderName + ": ") + last.text;
+        }else{
+            preview.textContent = "No messages yet";
+        }
+
+        const thread = document.createElement("div");
+        thread.className = "chatThread" + (openAdminChatThread === id ? " open" : "");
+
+        if(messages.length){
+            messages.forEach(function(message){
+                const item = document.createElement("div");
+                item.className = "chatThreadMessage" + (message.mine ? " mine" : "");
+                item.innerHTML = `<div class="chatThreadMessageMeta">${escapeHtml(message.mine ? "Administrator" : message.senderName)}</div><div>${escapeHtml(message.text)}</div>`;
+                thread.appendChild(item);
+            });
+        }else{
+            thread.innerHTML = '<div class="chatThreadEmpty">No conversation with this participant yet.</div>';
+        }
+
+        label.addEventListener("click", function(){
+            openAdminChatThread = openAdminChatThread === id ? null : id;
+            renderAdminChatRecipients();
+        });
+
+        branch.appendChild(label);
+        branch.appendChild(preview);
+        branch.appendChild(thread);
+        adminChatRecipients.appendChild(branch);
     });
 }
 
@@ -4214,9 +4369,18 @@ adminChatSend.addEventListener("click", async function(){
     if(!text || !chatChannel){ return; }
     for(const id of selected){
         await chatChannel.send({ type:"broadcast", event:"chat", payload:{ roomId:ROOM_ID, senderId:"ADMIN", senderName:"Administrator", recipientId:id, text:text, sentAt:new Date().toISOString() } });
+
+        if(!adminChatThreads[id]) adminChatThreads[id] = [];
+        adminChatThreads[id].push({
+            mine:true,
+            senderName:"Administrator",
+            text:text
+        });
     }
+
     appendChatMessage(adminChatMessages, true, "Administrator", text);
     adminChatInput.value = "";
+    renderAdminChatRecipients();
 });
 
 adminChatInput.addEventListener("keydown", function(event){ if(event.key === "Enter"){ event.preventDefault(); adminChatSend.click(); } });
