@@ -3247,11 +3247,22 @@ async function requestAdministratorMedia(){
 
         localStream =
             await navigator.mediaDevices.getUserMedia({
+                video:false,
                 audio:true
             });
 
         administratorMicOn =
             false;
+
+        const audioTracks =
+            localStream.getAudioTracks();
+
+        audioTracks.forEach(
+            track => {
+                track.enabled =
+                    false;
+            }
+        );
 
         updateAdministratorMicButton();
 
