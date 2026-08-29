@@ -4643,32 +4643,36 @@ async function loadConferenceParticipants(){
             }
 
 
-            if(
-                participant.status ===
-                "approved"
+           if(
+            participant.status ===
+            "approved"
             ){
 
-                participants.push({
+    const restoredParticipant = {
+        id:
+            participant.id,
 
-                    id:
-                        participant.id,
+        name:
+            participant.participant_name,
 
-                    name:
-                        participant.participant_name,
+        cameraOn:
+            participant.camera_on,
 
-                    cameraOn:
-                        participant.camera_on,
+        micOn:
+            participant.mic_on,
 
-                    micOn:
-                        participant.mic_on,
+        micLocked:
+            participant.mic_locked
+    };
 
-                    micLocked:
-                        participant.mic_locked
+    participants.push(
+        restoredParticipant
+    );
 
-                });
-
-            }
-
+    assignParticipantToTile(
+        restoredParticipant
+    );
+}
         }
     );
 
