@@ -1,0 +1,4458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+>
+
+<link rel="icon" type="image/png" href="favicon.png">
+    
+<title>Safe Insight Conference</title>
+
+<style>
+
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #111;
+    color: #fff;
+    overflow: hidden;
+}
+
+button,
+input {
+    font-family: inherit;
+}
+
+
+/* =========================================================
+   APPLICATION
+========================================================= */
+
+#app {
+    width: 100%;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+#header {
+    height: 72px;
+    min-height: 72px;
+
+    background: #000;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 8px 16px;
+
+    border-bottom: 2px solid #333;
+}
+
+.headerLogo {
+    height: 54px;
+    width: auto;
+    object-fit: contain;
+}
+
+#conferenceTitle {
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+}
+
+#connectionStatus {
+    font-size: 13px;
+    color: #62ff62;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   VIDEO AREA
+========================================================= */
+
+#conferenceArea {
+    flex: 1;
+    min-height: 0;
+
+    display: flex;
+
+    position: relative;
+
+    background: #000;
+}
+
+
+/* =========================================================
+   VIDEO GRID
+========================================================= */
+
+#videoGrid {
+
+    width: 100%;
+    height: 100%;
+
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+
+    gap: 1px;
+
+    background: #333;
+
+}
+
+
+/* =========================================================
+   VIDEO TILE
+========================================================= */
+
+.videoTile {
+
+    position: relative;
+
+    background: #111;
+
+    overflow: hidden;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 0;
+    min-height: 0;
+}
+
+.videoTile video {
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    display: block;
+
+    background: #111;
+}
+
+.videoTile.adminTile {
+
+    background: #fff;
+}
+
+.videoTile.waiting {
+
+    background: #151515;
+
+    color: #888;
+
+    font-size: 16px;
+}
+
+.videoTile.empty {
+
+    background: #090909;
+}
+
+
+/* =========================================================
+   ADMIN LOGO
+========================================================= */
+
+.adminLogoContainer {
+
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background: #fff;
+}
+
+.adminLogo {
+
+    width: 70%;
+    max-width: 320px;
+    height: auto;
+
+    object-fit: contain;
+}
+
+
+/* =========================================================
+   TILE LABEL
+========================================================= */
+
+.tileLabel {
+
+    position: absolute;
+
+    left: 8px;
+    bottom: 8px;
+
+    background: rgba(0,0,0,.75);
+
+    padding: 5px 9px;
+
+    border-radius: 4px;
+
+    font-size: 14px;
+
+    z-index: 5;
+}
+
+.adminLabel {
+
+    font-weight: bold;
+}
+
+
+/* =========================================================
+   TILE STATUS
+========================================================= */
+
+.tileStatus {
+
+    position: absolute;
+
+    right: 8px;
+    bottom: 8px;
+
+    display: flex;
+
+    gap: 5px;
+
+    z-index: 5;
+}
+
+.statusIcon {
+
+    width: 27px;
+    height: 27px;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(0,0,0,.75);
+
+    font-size: 14px;
+}
+
+.statusIcon.off {
+    color: #ff4b4b;
+}
+
+
+/* =========================================================
+   ADMIN CONTROL OVERLAY
+========================================================= */
+
+.adminControls {
+
+    position: absolute;
+
+    left: 8px;
+    right: 8px;
+    top: 8px;
+
+    display: none;
+
+    gap: 5px;
+
+    z-index: 10;
+
+    flex-wrap: wrap;
+}
+
+.videoTile:hover .adminControls {
+    display: flex;
+}
+
+.adminControls button {
+
+    border: none;
+
+    padding: 5px 7px;
+
+    font-size: 11px;
+
+    border-radius: 4px;
+
+    cursor: pointer;
+
+    background: rgba(0,0,0,.85);
+
+    color: #fff;
+}
+
+.adminControls button:hover {
+    background: #333;
+}
+
+.adminControls button.danger {
+    background: #a00000;
+}
+
+
+/* =========================================================
+   BOTTOM TOOLBAR
+========================================================= */
+
+#toolbar {
+
+    min-height: 64px;
+
+    background: #000;
+
+    border-top: 2px solid #333;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 10px;
+
+    padding: 8px 12px;
+}
+
+.toolbarButton {
+
+    min-width: 110px;
+
+    border: none;
+
+    border-radius: 6px;
+
+    padding: 10px 16px;
+
+    font-size: 14px;
+    font-weight: bold;
+
+    cursor: pointer;
+
+    background: #008000;
+
+    color: #fff;
+}
+
+.toolbarButton:hover {
+    background: #555;
+}
+
+.toolbarButton.active {
+    background: #147a14;
+}
+
+.toolbarButton.danger {
+    background: #8b0000;
+}
+
+.toolbarButton.redButton {
+    background: #ff0000 !important;
+    color: #ffffff !important;
+}
+
+.toolbarButton.redButton:hover {
+    background: #555555 !important;
+    color: #ffffff !important;
+}
+
+.toolbarButton.blueButton {
+    background: #0000ff !important;
+    color: #ffffff !important;
+}
+
+.toolbarButton.blueButton:hover {
+    background: #555555 !important;
+    color: #ffffff !important;
+}
+
+
+/* =========================================================
+   JOIN / KNOCK SCREEN
+========================================================= */
+
+#joinScreen {
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 1000;
+
+    background: rgba(0,0,0,.92);
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+}
+
+.joinBox {
+
+    width: 100%;
+    max-width: 420px;
+
+    background: #fff;
+
+    color: #111;
+
+    border-radius: 10px;
+
+    padding: 30px;
+
+    text-align: center;
+
+    box-shadow: 0 10px 40px rgba(0,0,0,.5);
+}
+
+.joinLogo {
+
+    width: 250px;
+    max-width: 80%;
+
+    margin-bottom: 20px;
+}
+
+.joinBox h1 {
+
+    margin: 5px 0 10px;
+
+    font-size: 24px;
+}
+
+.joinBox p {
+
+    color: #555;
+
+    line-height: 1.4;
+}
+
+#nameInput {
+
+    width: 100%;
+
+    padding: 13px;
+
+    border: 1px solid #bbb;
+
+    border-radius: 5px;
+
+    font-size: 16px;
+
+    margin: 15px 0;
+}
+
+#knockButton {
+
+    width: 100%;
+
+    padding: 14px;
+
+    border: none;
+
+    border-radius: 5px;
+
+    background: #d71920;
+
+    color: #fff;
+
+    font-size: 17px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+#knockButton:hover {
+    background: #b51016;
+}
+
+
+/* =========================================================
+   WAITING SCREEN
+========================================================= */
+
+#waitingScreen {
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 900;
+
+    background: rgba(0,0,0,.94);
+
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+}
+
+.waitingBox {
+
+    max-width: 500px;
+
+    text-align: center;
+}
+
+.waitingLogo {
+
+    width: 260px;
+
+    max-width: 80%;
+
+    margin-bottom: 25px;
+}
+
+.waitingBox h2 {
+
+    font-size: 25px;
+
+    margin-bottom: 10px;
+}
+
+.waitingBox p {
+
+    color: #ccc;
+
+    font-size: 17px;
+
+    line-height: 1.5;
+}
+
+.waitingSpinner {
+
+    margin: 25px auto;
+
+    width: 42px;
+    height: 42px;
+
+    border: 4px solid #444;
+
+    border-top-color: #fff;
+
+    border-radius: 50%;
+
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* =========================================================
+   ADMIN PANEL
+========================================================= */
+
+#adminPanel {
+
+    position: fixed;
+
+    top: 72px;
+    right: 0;
+    bottom: 64px;
+
+    width: 340px;
+
+    background: #181818;
+
+    border-left: 2px solid #444;
+
+    z-index: 200;
+
+    display: none;
+
+    flex-direction: column;
+}
+
+#adminPanelHeader {
+
+    padding: 15px;
+
+    border-bottom: 1px solid #444;
+
+    font-size: 18px;
+
+    font-weight: bold;
+}
+
+#waitingParticipants {
+
+    border-bottom: 1px solid #444;
+
+    padding: 10px;
+
+    max-height: 220px;
+
+    overflow-y: auto;
+}
+
+.waitingParticipant {
+
+    background: #252525;
+
+    padding: 10px;
+
+    border-radius: 5px;
+
+    margin-bottom: 8px;
+}
+
+.waitingParticipantName {
+
+    font-weight: bold;
+
+    margin-bottom: 8px;
+}
+
+.waitingParticipant button {
+
+    border: none;
+
+    padding: 7px 10px;
+
+    border-radius: 4px;
+
+    cursor: pointer;
+
+    font-weight: bold;
+}
+
+.allowButton {
+
+    background: #168016;
+    color: white;
+}
+
+.denyButton {
+
+    background: #8c0000;
+    color: white;
+}
+
+#participantList {
+
+    flex: 1;
+
+    overflow-y: auto;
+
+    padding: 10px;
+}
+
+.participantControl {
+
+    background: #252525;
+
+    border-radius: 6px;
+
+    padding: 12px;
+
+    margin-bottom: 10px;
+}
+
+.participantName {
+
+    font-weight: bold;
+
+    margin-bottom: 8px;
+}
+
+.controlRow {
+
+    display: flex;
+
+    gap: 5px;
+
+    flex-wrap: wrap;
+}
+
+.controlRow button {
+
+    flex: 1;
+
+    min-width: 85px;
+
+    padding: 7px 5px;
+
+    border: none;
+
+    border-radius: 4px;
+
+    background: #444;
+
+    color: #fff;
+
+    cursor: pointer;
+
+    font-size: 11px;
+}
+
+.controlRow button:hover {
+    background: #666;
+}
+
+.controlRow button.locked {
+
+    background: #9b7200;
+
+}
+
+.controlRow button.danger {
+
+    background: #8b0000;
+
+}
+
+
+/* =========================================================
+   ADMIN MODE NOTICE
+========================================================= */
+
+#adminModeBadge {
+
+    display: none;
+
+    position: absolute;
+
+    top: 10px;
+    left: 10px;
+
+    z-index: 50;
+
+    background: #d71920;
+
+    padding: 7px 12px;
+
+    border-radius: 5px;
+
+    font-weight: bold;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   RESPONSIVE - TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+    #header {
+        height: 60px;
+        min-height: 60px;
+    }
+
+    .headerLogo {
+        height: 42px;
+    }
+
+    #conferenceTitle {
+        font-size: 18px;
+    }
+
+    #adminPanel {
+
+        top: 60px;
+        bottom: 60px;
+
+        width: 300px;
+    }
+
+    #toolbar {
+        min-height: 60px;
+    }
+
+    .toolbarButton {
+
+        min-width: 90px;
+
+        padding: 9px 10px;
+
+        font-size: 12px;
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE - MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    html,
+    body {
+        overflow: hidden;
+    }
+
+    #header {
+
+        height: 50px;
+        min-height: 50px;
+
+        padding: 5px 8px;
+    }
+
+    .headerLogo {
+        height: 36px;
+    }
+
+    #conferenceTitle {
+        font-size: 14px;
+    }
+
+    #connectionStatus {
+        font-size: 10px;
+    }
+
+    /*
+       Two columns on phones.
+       The administrator remains prominent.
+    */
+
+    #videoGrid {
+
+        grid-template-columns: repeat(2, 1fr);
+
+        grid-auto-rows: minmax(130px, 1fr);
+
+        overflow-y: auto;
+
+        padding-bottom: 0;
+    }
+
+    /*
+       Administrator tile stays visually prominent.
+    */
+
+    .videoTile.adminTile {
+
+        order: -1;
+
+    }
+
+    .tileLabel {
+        font-size: 11px;
+        padding: 4px 6px;
+    }
+
+    .statusIcon {
+
+        width: 23px;
+        height: 23px;
+
+        font-size: 11px;
+    }
+
+    #toolbar {
+
+        min-height: 58px;
+
+        gap: 4px;
+
+        padding: 5px;
+    }
+
+    .toolbarButton {
+
+        min-width: 0;
+
+        flex: 1;
+
+        padding: 9px 5px;
+
+        font-size: 10px;
+    }
+
+
+    #adminPanel {
+
+        top: 50px;
+        bottom: 58px;
+
+        width: 100%;
+
+        border-left: none;
+
+        border-top: 2px solid #444;
+    }
+
+    .adminControls {
+
+        display: flex;
+    }
+
+    .adminControls button {
+
+        font-size: 9px;
+
+        padding: 4px 5px;
+    }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 400px) {
+
+    .joinBox {
+        padding: 20px;
+    }
+
+    .joinLogo {
+        width: 200px;
+    }
+
+    .joinBox h1 {
+        font-size: 20px;
+    }
+
+    #videoGrid {
+
+        grid-template-columns: repeat(2, 1fr);
+
+        grid-auto-rows: 125px;
+
+    }
+
+}
+
+
+/* =========================================================
+   DISTINCT ADMINISTRATOR / PARTICIPANT VIEWS
+========================================================= */
+
+#administratorView, #participantView { width:100%; height:100%; min-width:0; min-height:0; }
+#administratorView { display:block; }
+#participantView { display:none; gap:8px; padding:8px; background:#000; }
+
+.participantPanel { position:relative; min-width:0; min-height:0; background:#151515; border:1px solid #333; border-radius:6px; overflow:hidden; display:flex; flex-direction:column; }
+#participantVideoPanel, #participantChatPanel { flex:1; }
+.participantPanelTitle { flex:0 0 auto; padding:9px 12px; background:#000; border-bottom:1px solid #333; font-weight:bold; }
+#participantLocalVideo { width:100%; height:100%; min-height:0; object-fit:contain; background:#111; }
+#participantVideoPlaceholder { position:absolute; inset:42px 0 0 0; display:none; align-items:center; justify-content:center; color:#aaa; background:#111; }
+
+.toolbarView { display:none; width:100%; align-items:center; justify-content:center; gap:10px; }
+#administratorToolbar { display:flex; }
+
+#adminChatPanel { position:fixed; top:72px; right:0; bottom:64px; width:360px; background:#181818; border-left:2px solid #444; z-index:250; display:none; flex-direction:column; }
+.chatPanelHeader { display:flex; justify-content:space-between; align-items:center; padding:14px; border-bottom:1px solid #444; font-size:18px; }
+.chatCloseButton { border:0; background:transparent; color:#fff; cursor:pointer; font-size:18px; }
+.adminChatRecipients { padding:10px; border-bottom:1px solid #444; max-height:180px; overflow-y:auto; }
+.chatRecipientsTitle { font-weight:bold; margin-bottom:8px; }
+.chatRecipient { display:flex; align-items:center; gap:8px; padding:5px 0; }
+.chatRecipient input { width:16px; height:16px; }
+.chatMessages { flex:1; min-height:0; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:7px; }
+.chatMessage { max-width:88%; padding:8px 10px; border-radius:7px; background:#292929; word-break:break-word; }
+.chatMessage.mine { align-self:flex-end; background:#075e54; }
+.chatMessageMeta { font-size:10px; color:#aaa; margin-bottom:3px; }
+.chatComposer { display:flex; gap:6px; padding:9px; border-top:1px solid #444; background:#101010; }
+.chatComposer input { flex:1; min-width:0; padding:9px; border:1px solid #555; border-radius:5px; background:#222; color:#fff; }
+.chatSendButton { border:0; border-radius:5px; padding:9px 13px; background:#168016; color:#fff; font-weight:bold; cursor:pointer; }
+
+@media (orientation:portrait) and (max-width:900px) { #participantView { flex-direction:column; } }
+@media (orientation:landscape), (min-width:901px) { #participantView { flex-direction:row; } }
+@media (max-width:600px) { .toolbarView { gap:4px; } #adminChatPanel { top:50px; bottom:58px; width:100%; } }
+
+/* =========================================================
+   HIDDEN
+========================================================= */
+
+.hidden {
+    display: none !important;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- =======================================================
+     APPLICATION
+======================================================== -->
+
+<div id="app">
+
+
+    <!-- ===================================================
+         HEADER
+    ==================================================== -->
+
+    <header id="header">
+
+        <img
+            src="safe-insight-logo.png"
+            class="headerLogo"
+            alt="Safe Insight"
+        >
+
+        <div id="conferenceTitle">
+            Safe Insight Conference
+        </div>
+
+        <div id="connectionStatus">
+            ● Ready
+        </div>
+
+    </header>
+
+
+    <!-- ===================================================
+         CONFERENCE AREA
+    ==================================================== -->
+
+    <main id="conferenceArea">
+
+        <div id="adminModeBadge">
+            ADMINISTRATOR
+        </div>
+
+
+        <section id="administratorView">
+
+        <div id="videoGrid">
+
+
+            <!-- ===========================================
+                 TILE 1
+            ============================================ -->
+
+            <div
+                class="videoTile empty"
+                id="tile1"
+                data-slot="1"
+            >
+
+                <div class="tileLabel">
+                    Waiting for Participant
+                </div>
+
+            </div>
+
+
+            <!-- ===========================================
+                 TILE 2
+            ============================================ -->
+
+            <div
+                class="videoTile empty"
+                id="tile2"
+                data-slot="2"
+            >
+
+                <div class="tileLabel">
+                    Waiting for Participant
+                </div>
+
+            </div>
+
+
+            <!-- ===========================================
+                 TILE 3
+            ============================================ -->
+
+            <div
+                class="videoTile empty"
+                id="tile3"
+                data-slot="3"
+            >
+
+                <div class="tileLabel">
+                    Waiting for Participant
+                </div>
+
+            </div>
+
+
+            <!-- ===========================================
+                 TILE 4
+            ============================================ -->
+
+            <div
+                class="videoTile empty"
+                id="tile4"
+                data-slot="4"
+            >
+
+                <div class="tileLabel">
+                    Waiting for Participant
+                </div>
+
+            </div>
+
+
+            <!-- ===========================================
+                 ADMINISTRATOR CENTER
+            ============================================ -->
+
+            <div
+                class="videoTile adminTile"
+                id="adminTile"
+                data-slot="5"
+            >
+
+                <div
+                    class="adminLogoContainer"
+                    id="adminLogoContainer"
+                >
+
+                    <img
+                        src="safe-insight-logo.png"
+                        class="adminLogo"
+                        alt="Safe Insight"
+                    >
+
+                </div>
+
+
+                <video
+                    id="adminVideo"
+                    autoplay
+                    playsinline
+                    muted
+                    class="hidden"
+                ></video>
+
+
+                <div class="tileLabel adminLabel">
+                    Administrator
+                </div>
+
+
+                <div class="tileStatus">
+
+                    <div
+                        class="statusIcon"
+                        id="adminMicStatus"
+                    >
+                        🎤
+                    </div>
+
+                    <div
+                        class="statusIcon"
+                        id="adminCameraStatus"
+                    >
+                        📹
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ===========================================
+                 TILE 6
+            ============================================ -->
+
+            <div
+                class="videoTile empty"
+                id="tile6"
+                data-slot="6"
+            >
+
+                <div class="tileLabel">
+                    Waiting for Participant
+                </div>
+
+            </div>
+
+
+            <!-- ===========================================
+                 TILE 7
+            ============================================ -->
+
+            <div
+                class="videoTile empty"
+                id="tile7"
+                data-slot="7"
+            >
+
+                <div class="tileLabel">
+                    Waiting for Participant
+                </div>
+
+            </div>
+
+
+            <!-- ===========================================
+                 TILE 8
+            ============================================ -->
+
+            <div
+                class="videoTile empty"
+                id="tile8"
+                data-slot="8"
+            >
+
+                <div class="tileLabel">
+                    Waiting for Participant
+                </div>
+
+            </div>
+
+
+            <!-- ===========================================
+                 TILE 9
+            ============================================ -->
+
+            <div
+                class="videoTile empty"
+                id="tile9"
+                data-slot="9"
+            >
+
+                <div class="tileLabel">
+                    Waiting for Participant
+                </div>
+
+            </div>
+
+
+        </div>
+
+        </section>
+
+        <section id="participantView">
+
+            <div id="participantVideoPanel" class="participantPanel">
+                <div class="participantPanelTitle">Your Video</div>
+                <video id="participantLocalVideo" autoplay playsinline muted></video>
+                <div id="participantVideoPlaceholder">Camera Off</div>
+            </div>
+
+            <div id="participantChatPanel" class="participantPanel">
+                <div class="participantPanelTitle">Chat with Administrator</div>
+                <div id="participantChatMessages" class="chatMessages"></div>
+                <div class="chatComposer">
+                    <input id="participantChatInput" type="text" maxlength="500" placeholder="Type a message...">
+                    <button id="participantChatSend" class="chatSendButton">Send</button>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- ===================================================
+         BOTTOM TOOLBAR
+    ==================================================== -->
+
+    <footer id="toolbar">
+
+        <div id="administratorToolbar" class="toolbarView">
+            <button class="toolbarButton blueButton" id="adminPanelButton">Participants</button>
+            <button class="toolbarButton blueButton" id="adminCameraButton">Administrator Video</button>
+            <button class="toolbarButton" id="adminChatButton">💬 Chat</button>
+            <button class="toolbarButton" id="micButton">🎤 Mic</button>
+            <button class="toolbarButton" id="cameraButton">📹 Camera</button>
+            <button class="toolbarButton danger" id="leaveButton">Leave</button>
+        </div>
+
+        <div id="participantToolbar" class="toolbarView">
+            <button type="button" class="toolbarButton redButton" onclick="window.open('https://safeinsight.acadio.com/auth/signin?go=/dashboard','_blank')">Training Login</button>
+            <button type="button" class="toolbarButton redButton" onclick="window.open('https://app.acuityscheduling.com/schedule/0fd3042a/appointment/56783178/calendar/14314778?appointmentTypeIds[]=56783178','_blank')">Schedule Conference</button>
+            <button class="toolbarButton" id="micButtonParticipant">🎤 Mic</button>
+            <button class="toolbarButton" id="cameraButtonParticipant">📹 Camera</button>
+            <button class="toolbarButton" id="participantChatButton">💬 Chat</button>
+            <button class="toolbarButton danger" id="leaveButtonParticipant">Leave</button>
+        </div>
+
+    </footer>
+
+
+</div>
+
+
+<!-- =======================================================
+     PARTICIPANT JOIN SCREEN
+======================================================== -->
+
+<div id="joinScreen">
+
+    <div class="joinBox">
+
+        <img
+            src="safe-insight-logo.png"
+            class="joinLogo"
+            alt="Safe Insight"
+        >
+
+        <h1>
+            Safe Insight Conference
+        </h1>
+
+        <p>
+            Please enter your name before joining the conference.
+        </p>
+
+        <input
+            type="text"
+            id="nameInput"
+            placeholder="Enter your name"
+            maxlength="40"
+            autocomplete="name"
+        >
+
+        <button id="knockButton">
+            🔔 Knock to Enter
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =======================================================
+     WAITING SCREEN
+======================================================== -->
+
+<div id="waitingScreen">
+
+    <div class="waitingBox">
+
+        <img
+            src="safe-insight-logo.png"
+            class="waitingLogo"
+            alt="Safe Insight"
+        >
+
+        <h2>
+            Waiting for Entry
+        </h2>
+
+        <p>
+            Your request has been sent to the administrator.
+        </p>
+
+        <p>
+            Please wait while the administrator allows you
+            into the conference.
+        </p>
+
+        <div class="waitingSpinner"></div>
+
+        <strong id="waitingName"></strong>
+
+    </div>
+
+</div>
+
+
+<!-- =======================================================
+     ADMIN CHAT PANEL
+======================================================== -->
+<aside id="adminChatPanel">
+    <div class="chatPanelHeader">
+        <strong>Chat</strong>
+        <button id="closeAdminChat" class="chatCloseButton">✕</button>
+    </div>
+    <div class="adminChatRecipients">
+        <div class="chatRecipientsTitle">Send to:</div>
+        <div id="adminChatRecipients"></div>
+    </div>
+    <div id="adminChatMessages" class="chatMessages"></div>
+    <div class="chatComposer">
+        <input id="adminChatInput" type="text" maxlength="500" placeholder="Type a message...">
+        <button id="adminChatSend" class="chatSendButton">Send</button>
+    </div>
+</aside>
+
+<!-- =======================================================
+     ADMIN PANEL
+======================================================== -->
+
+<aside id="adminPanel">
+
+    <div id="adminPanelHeader">
+
+        Conference Controls
+
+    </div>
+
+
+    <!-- ================================================
+         WAITING PARTICIPANTS
+    ================================================= -->
+
+    <div id="waitingParticipants">
+
+        <strong>
+            Waiting Room
+        </strong>
+
+        <div id="waitingList">
+
+            <p style="color:#777;">
+                Nobody is waiting.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================
+         ACTIVE PARTICIPANTS
+    ================================================= -->
+
+    <div id="participantList">
+
+        <strong>
+            Participants
+        </strong>
+
+        <p
+            id="noParticipants"
+            style="color:#777;"
+        >
+            No participants have entered.
+        </p>
+
+    </div>
+
+</aside>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+/* =========================================================
+   SUPABASE
+========================================================= */
+
+const SUPABASE_URL =
+    "https://ohrkwtcsprzvgkqidcei.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_RD9pOKKYBSJU-7jjNNFfBg_VJcyWNeu";
+
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+    );
+
+/* =========================================================
+   CONFERENCE ROOM
+========================================================= */
+
+const urlParams =
+    new URLSearchParams(
+        window.location.search
+    );
+
+
+const ROOM_ID =
+    urlParams.get("room") || "DEMO";
+
+
+console.log(
+    "Conference Room:",
+    ROOM_ID
+);
+    
+/* =========================================================
+   APPLICATION STATE
+========================================================= */
+
+let isAdministrator = false;
+
+let localStream = null;
+
+let administratorCameraOn = false;
+
+let administratorMicOn = false;
+
+let participants = [];
+
+let waitingParticipants = [];
+
+let nextParticipantId = 1;
+
+
+/* =========================================================
+   DETERMINE ADMINISTRATOR MODE
+========================================================= */
+
+/*
+   For this first prototype:
+
+   Participant:
+       index.html
+
+   Administrator:
+       index.html?admin=true
+
+   Later we will replace this with secure authentication.
+*/
+
+const params = new URLSearchParams(
+    window.location.search
+);
+
+isAdministrator =
+    params.get("admin") === "true";
+
+
+/* =========================================================
+   DOM REFERENCES
+========================================================= */
+
+const joinScreen =
+    document.getElementById("joinScreen");
+
+const waitingScreen =
+    document.getElementById("waitingScreen");
+
+const waitingName =
+    document.getElementById("waitingName");
+
+const nameInput =
+    document.getElementById("nameInput");
+
+const knockButton =
+    document.getElementById("knockButton");
+
+const adminPanel =
+    document.getElementById("adminPanel");
+
+const adminPanelButton =
+    document.getElementById("adminPanelButton");
+
+const adminCameraButton =
+    document.getElementById("adminCameraButton");
+
+const micButton =
+    document.getElementById("micButton");
+
+const cameraButton =
+    document.getElementById("cameraButton");
+
+const leaveButton =
+    document.getElementById("leaveButton");
+    
+
+const adminVideo =
+    document.getElementById("adminVideo");
+
+const adminLogoContainer =
+    document.getElementById("adminLogoContainer");
+
+const adminModeBadge =
+    document.getElementById("adminModeBadge");
+
+const connectionStatus =
+    document.getElementById("connectionStatus");
+
+const waitingList =
+    document.getElementById("waitingList");
+
+const participantList =
+    document.getElementById("participantList");
+
+const noParticipants =
+    document.getElementById("noParticipants");
+
+const administratorView = document.getElementById("administratorView");
+const participantView = document.getElementById("participantView");
+const administratorToolbar = document.getElementById("administratorToolbar");
+const participantToolbar = document.getElementById("participantToolbar");
+const participantLocalVideo = document.getElementById("participantLocalVideo");
+const participantVideoPlaceholder = document.getElementById("participantVideoPlaceholder");
+const adminChatButton = document.getElementById("adminChatButton");
+const adminChatPanel = document.getElementById("adminChatPanel");
+const closeAdminChat = document.getElementById("closeAdminChat");
+const adminChatRecipients = document.getElementById("adminChatRecipients");
+const adminChatMessages = document.getElementById("adminChatMessages");
+const adminChatInput = document.getElementById("adminChatInput");
+const adminChatSend = document.getElementById("adminChatSend");
+const participantChatButton = document.getElementById("participantChatButton");
+const participantChatMessages = document.getElementById("participantChatMessages");
+const participantChatInput = document.getElementById("participantChatInput");
+const participantChatSend = document.getElementById("participantChatSend");
+const micButtonParticipant = document.getElementById("micButtonParticipant");
+const cameraButtonParticipant = document.getElementById("cameraButtonParticipant");
+const leaveButtonParticipant = document.getElementById("leaveButtonParticipant");
+
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+function initializeApplication(){
+
+    if(isAdministrator){
+
+        initializeAdministrator();
+
+    }else{
+
+        initializeParticipant();
+
+    }
+
+}
+
+
+/* =========================================================
+   ADMINISTRATOR
+========================================================= */
+
+function initializeAdministrator(){
+
+    joinScreen.classList.add("hidden");
+    administratorView.style.display = "block";
+    participantView.style.display = "none";
+    administratorToolbar.style.display = "flex";
+    participantToolbar.style.display = "none";
+    adminModeBadge.style.display = "block";
+
+    connectionStatus.textContent = "● Administrator";
+    connectionStatus.style.color = "#62ff62";
+
+}
+
+/* =========================================================
+   PARTICIPANT
+========================================================= */
+
+function initializeParticipant(){
+
+    administratorView.style.display = "none";
+    participantView.style.display = "none";
+    administratorToolbar.style.display = "none";
+    participantToolbar.style.display = "flex";
+
+    joinScreen.classList.remove("hidden");
+
+}
+
+/* =========================================================
+   KNOCK
+========================================================= */
+
+knockButton.addEventListener(
+    "click",
+    async function(){
+
+        const name =
+            nameInput.value.trim();
+
+
+        if(!name){
+
+            alert(
+                "Please enter your name."
+            );
+
+            nameInput.focus();
+
+            return;
+
+        }
+
+
+        knockButton.disabled =
+            true;
+
+        knockButton.textContent =
+            "Knocking...";
+
+
+        /*
+           Ask for camera and microphone permission.
+        */
+
+        try{
+
+            localStream =
+                await navigator.mediaDevices.getUserMedia({
+                    video:true,
+                    audio:true
+                });
+
+        }catch(error){
+
+            console.log(
+                "Camera/microphone permission:",
+                error
+            );
+
+        }
+
+
+        /*
+           Create participant record.
+        */
+
+        const {
+            data,
+            error
+        } =
+        await supabaseClient
+            .from(
+                "conference_participants"
+            )
+            .insert({
+
+                room_id:
+                    ROOM_ID,
+
+                participant_name:
+                    name,
+
+                role:
+                    "participant",
+
+                status:
+                    "waiting",
+
+                camera_on:
+                    true,
+
+                mic_on:
+                    true,
+
+                mic_locked:
+                    false
+
+            })
+            .select()
+            .single();
+
+
+        if(error){
+
+            console.error(
+                "Knock error:",
+                error
+            );
+
+            alert(
+                "Unable to contact the conference room."
+            );
+
+            knockButton.disabled =
+                false;
+
+            knockButton.textContent =
+                "🔔 Knock to Enter";
+
+            return;
+
+        }
+
+
+        /*
+           Save our participant ID.
+
+           We will need this later for WebRTC.
+        */
+
+        window.myParticipantId =
+            data.id;
+
+
+        console.log(
+            "Knock successful:",
+            data
+        );
+
+
+        /*
+           Show waiting screen.
+        */
+
+        waitingName.textContent =
+            name;
+
+        joinScreen.classList.add(
+            "hidden"
+        );
+
+        waitingScreen.style.display =
+            "flex";
+
+
+        connectionStatus.textContent =
+            "● Waiting for approval";
+
+        connectionStatus.style.color =
+            "#ffd400";
+
+
+        /*
+           Listen for administrator decision.
+        */
+
+        subscribeToMyParticipant(
+            data.id
+        );
+
+    }
+);
+
+/* =========================================================
+   PARTICIPANT STATUS LISTENER
+========================================================= */
+
+function subscribeToMyParticipant(participantId){
+
+    console.log(
+        "Starting participant subscription:",
+        participantId
+    );
+
+    const channel =
+        supabaseClient
+            .channel(
+                "participant-" + participantId
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "UPDATE",
+                    schema: "public",
+                    table: "conference_participants",
+                    filter:
+                        "id=eq." + participantId
+                },
+                function(payload){
+
+                    console.log(
+                        "================================"
+                    );
+
+                    console.log(
+                        "PARTICIPANT UPDATE RECEIVED"
+                    );
+
+                    console.log(
+                        "OLD:",
+                        payload.old
+                    );
+
+                    console.log(
+                        "NEW:",
+                        payload.new
+                    );
+
+                    console.log(
+                        "================================"
+                    );
+
+                    const participant =
+                        payload.new;
+
+                    if(
+                        participant.status ===
+                        "approved"
+                    ){
+
+                        console.log(
+                            "ENTRY APPROVED"
+                        );
+
+                        enterConference(
+                            participant
+                        );
+
+                        /*
+                         * Start the actual WebRTC
+                         * connection here.
+                         *
+                         * We will add the WebRTC
+                         * function next.
+                         */
+                        startParticipantWebRTC(
+                            participant
+                        );
+
+                    }
+
+                    if(
+                        participant.status ===
+                        "denied"
+                    ){
+
+                        console.log(
+                            "ENTRY DENIED"
+                        );
+
+                        showDeniedScreen();
+
+                    }
+
+                    if(
+                        participant.status ===
+                        "removed"
+                    ){
+
+                        console.log(
+                            "REMOVED BY ADMINISTRATOR"
+                        );
+
+                        showRemovedScreen();
+
+                    }
+
+                }
+            )
+            .subscribe(
+                function(status){
+
+                    console.log(
+                        "Participant subscription status:",
+                        status
+                    );
+
+                }
+            );
+
+    window.participantChannel =
+        channel;
+
+}
+
+/* =========================================================
+   REMOVED BY ADMINISTRATOR
+========================================================= */
+
+function showRemovedScreen(){
+
+    /*
+       Stop local camera/microphone.
+    */
+
+    if(localStream){
+
+        localStream
+            .getTracks()
+            .forEach(
+                track => track.stop()
+            );
+
+        localStream = null;
+
+    }
+
+
+    waitingScreen.style.display =
+        "none";
+
+if(conferenceArea){
+
+    conferenceArea.style.display =
+        "none";
+
+}
+    
+
+    /*
+       Return to join screen.
+    */
+
+    joinScreen.classList.remove(
+        "hidden"
+    );
+
+
+    nameInput.value =
+        "";
+
+
+    knockButton.disabled =
+        false;
+
+
+    knockButton.textContent =
+        "🔔 Knock to Enter";
+
+
+    connectionStatus.textContent =
+        "● Removed from conference";
+
+    connectionStatus.style.color =
+        "#ff4444";
+
+
+    alert(
+        "The administrator has removed you from the conference."
+    );
+
+}
+
+/* =========================================================
+   ATTACH PARTICIPANT VIDEO
+========================================================= */
+    
+function attachLocalParticipantVideo(){
+
+    if(!localStream){
+        console.warn("No local participant stream available.");
+        return;
+    }
+
+    participantLocalVideo.srcObject = localStream;
+    participantLocalVideo.style.display = "block";
+    participantVideoPlaceholder.style.display = "none";
+
+}
+
+/* =========================================================
+   ENTER CONFERENCE
+========================================================= */
+
+function enterConference(participant){
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "ENTER CONFERENCE CALLED"
+    );
+
+    console.log(
+        "Participant:",
+        participant
+    );
+
+    console.log(
+        "================================"
+    );
+
+    /*
+     * Hide waiting screen.
+     */
+    if(waitingScreen){
+
+        waitingScreen.style.display =
+            "none";
+
+    }
+
+    /*
+     * Show conference interface.
+     */
+    if(conferenceArea){
+        conferenceArea.style.display = "flex";
+    }
+
+    if(!isAdministrator){
+        administratorView.style.display = "none";
+        participantView.style.display = "flex";
+        participantToolbar.style.display = "flex";
+    }
+
+    /*
+     * Make sure our local participant
+     * camera/microphone is attached to
+     * a local video element.
+     */
+    attachLocalParticipantVideo();
+
+    /*
+     * Update connection indicator.
+     */
+    if(connectionStatus){
+
+        connectionStatus.textContent =
+            "● Connecting...";
+
+        connectionStatus.style.color =
+            "#ffd400";
+
+    }
+
+    console.log(
+        "Participant admitted."
+    );
+
+}
+
+/* =========================================================
+   DENIED
+========================================================= */
+
+function showDeniedScreen(){
+
+    waitingScreen.style.display =
+        "none";
+
+
+    joinScreen.classList.remove(
+        "hidden"
+    );
+
+
+    nameInput.value =
+        "";
+
+
+    knockButton.disabled =
+        false;
+
+
+    knockButton.textContent =
+        "🔔 Knock to Enter";
+
+
+    connectionStatus.textContent =
+        "● Entry denied";
+
+    connectionStatus.style.color =
+        "#ff4444";
+
+
+    alert(
+        "The administrator did not allow entry to the conference."
+    );
+
+}
+
+/* =========================================================
+   ADMIN REALTIME LISTENER
+========================================================= */
+
+function subscribeToConference(){
+
+    if(!isAdministrator){
+
+        return;
+
+    }
+
+
+    console.log(
+        "Listening for conference activity..."
+    );
+
+
+    supabaseClient
+        .channel(
+            "admin-room-" + ROOM_ID
+        )
+        .on(
+
+            "postgres_changes",
+
+            {
+                event: "INSERT",
+
+                schema: "public",
+
+                table:
+                    "conference_participants",
+
+                filter:
+                    "room_id=eq." + ROOM_ID
+
+            },
+
+            function(payload){
+
+                console.log(
+                    "NEW PARTICIPANT:",
+                    payload.new
+                );
+
+
+                const participant =
+                    payload.new;
+
+
+                if(
+                    participant.status ===
+                    "waiting"
+                ){
+
+                    addWaitingParticipantFromDatabase(
+                        participant
+                    );
+
+                }
+
+            }
+
+        )
+        .on(
+
+            "postgres_changes",
+
+            {
+                event: "UPDATE",
+
+                schema: "public",
+
+                table:
+                    "conference_participants",
+
+                filter:
+                    "room_id=eq." + ROOM_ID
+
+            },
+
+            function(payload){
+
+                console.log(
+                    "PARTICIPANT UPDATE:",
+                    payload.new
+                );
+
+
+                updateAdministratorParticipant(
+                    payload.new
+                );
+
+            }
+
+        )
+
+        .on(
+
+            "postgres_changes",
+
+            {
+                event: "DELETE",
+
+                schema: "public",
+
+                table:
+                    "conference_participants",
+
+                filter:
+                    "room_id=eq." + ROOM_ID
+
+            },
+
+            function(payload){
+
+                console.log(
+                    "PARTICIPANT DELETED:",
+                    payload.old
+                );
+
+
+                const deletedId =
+                payload.old.id;
+
+            console.log(
+            "DELETE EVENT PARTICIPANT ID:",
+            deletedId
+);
+
+
+                /*
+                 * Remove from waiting participants.
+                 */
+                waitingParticipants =
+                    waitingParticipants.filter(
+                        p => p.id !== deletedId
+                    );
+
+
+                /*
+                 * Remove from active participants.
+                 */
+                participants =
+                    participants.filter(
+                        p => p.id !== deletedId
+                    );
+
+
+                /*
+                 * Clear participant's video tile.
+                 */
+                document
+                    .querySelectorAll(
+                        ".videoTile[data-participant-id]"
+                    )
+                    .forEach(
+                        tile => {
+
+                            if(
+                                String(
+                                    tile.dataset.participantId
+                                ) === String(deletedId)
+                            ){
+
+                                clearParticipantTile(
+                                    tile
+                                );
+
+                            }
+
+                        }
+                    );
+
+
+                /*
+                 * Refresh both administrator lists.
+                 */
+                renderWaitingParticipants();
+
+                renderParticipants();
+
+            }
+
+        )
+        
+        .subscribe(
+
+            function(status){
+
+                console.log(
+                    "ADMIN SUBSCRIPTION:",
+                    status
+                );
+
+            }
+
+        );
+
+}
+
+/* =========================================================
+   DATABASE WAITING PARTICIPANT
+========================================================= */
+
+function addWaitingParticipantFromDatabase(
+    participant
+){
+
+    /*
+       Prevent duplicates.
+    */
+
+    const alreadyExists =
+        waitingParticipants.some(
+            p =>
+                p.id === participant.id
+        );
+
+
+    if(alreadyExists){
+
+        return;
+
+    }
+
+
+    waitingParticipants.push({
+
+        id:
+            participant.id,
+
+        name:
+            participant.participant_name,
+
+        databaseRecord:
+            participant
+
+    });
+
+
+    renderWaitingParticipants();
+
+}
+
+/* =========================================================
+   UPDATE ADMINISTRATOR PARTICIPANT
+========================================================= */
+
+function updateAdministratorParticipant(participant){
+
+    console.log(
+        "Updating administrator participant:",
+        participant
+    );
+
+
+    /*
+       Find participant in active list.
+    */
+
+    const index =
+        participants.findIndex(
+            p => p.id === participant.id
+        );
+
+
+    /*
+       Participant was denied.
+       Remove them from the active list.
+    */
+
+if(
+    participant.status === "denied" ||
+    participant.status === "removed" ||
+    participant.status === "left"
+){
+
+    if(index !== -1){
+
+        participants.splice(
+            index,
+            1
+        );
+
+    }
+
+
+    /*
+     * Clear the participant's video tile.
+     */
+    document
+        .querySelectorAll(
+            ".videoTile[data-participant-id]"
+        )
+        .forEach(
+            tile => {
+
+                if(
+                    String(
+                        tile.dataset.participantId
+                    ) === String(
+                        participant.id
+                    )
+                ){
+
+                    clearParticipantTile(
+                        tile
+                    );
+
+                }
+
+            }
+        );
+
+
+    /*
+     * Refresh administrator participant panel.
+     */
+    renderParticipants();
+
+
+    /*
+     * If participant left voluntarily,
+     * permanently delete their database row.
+     */
+    if(
+        participant.status === "left"
+    ){
+
+        console.log(
+            "Participant left voluntarily. Deleting database record:",
+            participant.id
+        );
+
+
+        supabaseClient
+            .from(
+                "conference_participants"
+            )
+            .delete()
+            .eq(
+                "id",
+                participant.id
+            )
+            .then(
+                function(result){
+
+                    if(result.error){
+
+                        console.error(
+                            "DELETE LEFT PARTICIPANT ERROR:",
+                            result.error
+                        );
+
+                        return;
+
+                    }
+
+
+                    console.log(
+                        "LEFT PARTICIPANT DELETED FROM SUPABASE:",
+                        participant.id
+                    );
+
+                }
+            );
+
+    }
+
+
+    return;
+
+}
+
+
+    /*
+       Participant was approved.
+       Add/update them in active participants.
+    */
+
+    if(
+        participant.status === "approved"
+    ){
+
+        const updatedParticipant = {
+
+            id:
+                participant.id,
+
+            name:
+                participant.participant_name,
+
+            cameraOn:
+                participant.camera_on,
+
+            micOn:
+                participant.mic_on,
+
+            micLocked:
+                participant.mic_locked
+
+        };
+
+
+        if(index === -1){
+
+            participants.push(
+                updatedParticipant
+            );
+
+        }else{
+
+            participants[index] =
+                updatedParticipant;
+
+        }
+
+
+        renderParticipants();
+
+        assignParticipantToTile(
+            updatedParticipant
+        );
+
+        return;
+
+    }
+
+}
+
+/* =========================================================
+   ALLOW PARTICIPANT
+========================================================= */
+
+async function allowParticipant(id){
+
+    console.log(
+        "Allowing participant:",
+        id
+    );
+
+
+    /*
+       Update the participant's status.
+    */
+
+    const {
+        data,
+        error
+    } =
+    await supabaseClient
+        .from("conference_participants")
+        .update({
+
+            status: "approved",
+
+            updated_at:
+                new Date().toISOString()
+
+        })
+        .eq(
+            "id",
+            id
+        )
+        .select()
+        .single();
+
+
+    /*
+       Check for database error.
+    */
+
+    if(error){
+
+        console.error(
+            "ALLOW PARTICIPANT ERROR:",
+            error
+        );
+
+        alert(
+            "Unable to allow participant.\n\n" +
+            error.message
+        );
+
+        return;
+
+    }
+
+
+    console.log(
+        "Participant approved in database:",
+        data
+    );
+
+
+    /*
+       Remove participant from waiting room.
+    */
+
+    waitingParticipants =
+        waitingParticipants.filter(
+            p => p.id !== id
+        );
+
+
+    renderWaitingParticipants();
+
+
+    /*
+       Add participant to administrator's
+       active participant list.
+    */
+
+    const participant = {
+
+        id:
+            data.id,
+
+        name:
+            data.participant_name,
+
+        cameraOn:
+            data.camera_on,
+
+        micOn:
+            data.mic_on,
+
+        micLocked:
+            data.mic_locked
+
+    };
+
+
+    /*
+       Prevent duplicate participant entries.
+    */
+
+    const alreadyActive =
+        participants.some(
+            p => p.id === participant.id
+        );
+
+
+    if(!alreadyActive){
+
+        participants.push(
+            participant
+        );
+
+    }
+
+
+    renderParticipants();
+
+
+    /*
+       Put participant into a video tile.
+    */
+
+    assignParticipantToTile(
+        participant
+    );
+
+}
+
+/* =========================================================
+   REMOVE PARTICIPANT
+========================================================= */
+
+async function removeParticipant(id){
+
+    console.log(
+        "Removing participant:",
+        id
+    );
+
+    /*
+     * First tell the participant that they
+     * have been removed.
+     *
+     * This allows the participant browser
+     * to react immediately.
+     */
+    const {
+        error: updateError
+    } =
+    await supabaseClient
+        .from("conference_participants")
+        .update({
+            status: "removed",
+            updated_at:
+                new Date().toISOString()
+        })
+        .eq(
+            "id",
+            id
+        );
+
+    if(updateError){
+
+        console.error(
+            "REMOVE PARTICIPANT UPDATE ERROR:",
+            updateError
+        );
+
+        alert(
+            "Unable to remove participant.\n\n" +
+            updateError.message
+        );
+
+        return;
+    }
+
+    console.log(
+        "Participant marked removed:",
+        id
+    );
+
+    /*
+     * Remove immediately from the
+     * administrator's local state.
+     */
+    participants =
+        participants.filter(
+            p => p.id !== id
+        );
+
+    /*
+     * Clear the participant's video tile.
+     */
+    document
+        .querySelectorAll(
+            ".videoTile[data-participant-id]"
+        )
+        .forEach(
+            tile => {
+
+                if(
+                    String(
+                        tile.dataset.participantId
+                    ) === String(id)
+                ){
+
+                    clearParticipantTile(
+                        tile
+                    );
+
+                }
+
+            }
+        );
+
+    renderParticipants();
+
+    /*
+     * Give the participant browser a moment
+     * to receive the "removed" realtime event,
+     * then permanently delete the database row.
+     */
+    setTimeout(
+        async function(){
+
+            const {
+                error: deleteError
+            } =
+            await supabaseClient
+                .from(
+                    "conference_participants"
+                )
+                .delete()
+                .eq(
+                    "id",
+                    id
+                );
+
+            if(deleteError){
+
+                console.error(
+                    "REMOVE PARTICIPANT DELETE ERROR:",
+                    deleteError
+                );
+
+                return;
+            }
+
+            console.log(
+                "Participant permanently deleted:",
+                id
+            );
+
+        },
+        1500
+    );
+
+}
+
+/* =========================================================
+   ADMINISTRATOR CAMERA
+========================================================= */
+
+adminCameraButton.addEventListener(
+    "click",
+    async function(){
+
+        if(!administratorCameraOn){
+
+            try{
+
+                const stream =
+                    await navigator.mediaDevices.getUserMedia({
+                        video:true,
+                        audio:false
+                    });
+
+                adminVideo.srcObject =
+                    stream;
+
+                adminVideo.classList.remove(
+                    "hidden"
+                );
+
+                adminLogoContainer.classList.add(
+                    "hidden"
+                );
+
+                administratorCameraOn =
+                    true;
+
+                adminCameraButton.textContent =
+                    "Show Safe Insight Logo";
+
+                updateAdministratorCameraStatus();
+
+            }catch(error){
+
+                alert(
+                    "Unable to access the administrator camera."
+                );
+
+                console.error(error);
+
+            }
+
+        }else{
+
+            /*
+               Return to logo.
+            */
+
+            if(adminVideo.srcObject){
+
+                adminVideo.srcObject
+                    .getTracks()
+                    .forEach(
+                        track => track.stop()
+                    );
+
+            }
+
+            adminVideo.srcObject =
+                null;
+
+            adminVideo.classList.add(
+                "hidden"
+            );
+
+            adminLogoContainer.classList.remove(
+                "hidden"
+            );
+
+            administratorCameraOn =
+                false;
+
+            adminCameraButton.textContent =
+                "Administrator Video";
+
+            updateAdministratorCameraStatus();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   ADMIN MIC
+========================================================= */
+
+micButton.addEventListener(
+    "click",
+    function(){
+
+        if(!localStream){
+
+            /*
+               Administrator can request microphone
+               when they first click.
+            */
+
+            requestAdministratorMedia();
+
+            return;
+
+        }
+
+        const audioTracks =
+            localStream.getAudioTracks();
+
+        if(audioTracks.length === 0){
+
+            return;
+
+        }
+
+        administratorMicOn =
+            !administratorMicOn;
+
+        audioTracks.forEach(
+            track => {
+                track.enabled =
+                    administratorMicOn;
+            }
+        );
+
+        updateAdministratorMicButton();
+
+    }
+);
+
+
+/* =========================================================
+   ADMIN CAMERA BUTTON
+========================================================= */
+
+cameraButton.addEventListener(
+    "click",
+    function(){
+
+        if(!localStream){
+
+            requestAdministratorMedia();
+
+            return;
+
+        }
+
+        const videoTracks =
+            localStream.getVideoTracks();
+
+        if(videoTracks.length === 0){
+
+            return;
+
+        }
+
+        const currentlyEnabled =
+            videoTracks[0].enabled;
+
+        videoTracks.forEach(
+            track => {
+                track.enabled =
+                    !currentlyEnabled;
+            }
+        );
+
+        updateCameraButton();
+
+    }
+);
+
+
+/* =========================================================
+   REQUEST ADMIN MEDIA
+========================================================= */
+
+async function requestAdministratorMedia(){
+
+    try{
+
+        localStream =
+            await navigator.mediaDevices.getUserMedia({
+                video:true,
+                audio:true
+            });
+
+        administratorCameraOn =
+            true;
+
+        administratorMicOn =
+            true;
+
+        updateCameraButton();
+
+        updateAdministratorMicButton();
+
+    }catch(error){
+
+        alert(
+            "Camera and microphone permission was not granted."
+        );
+
+        console.error(error);
+
+    }
+
+}
+
+
+/* =========================================================
+   CAMERA BUTTON DISPLAY
+========================================================= */
+
+function updateCameraButton(){
+
+    if(!localStream){
+
+        cameraButton.textContent =
+            "📹 Camera";
+
+        return;
+
+    }
+
+    const tracks =
+        localStream.getVideoTracks();
+
+    if(!tracks.length){
+
+        return;
+
+    }
+
+    if(tracks[0].enabled){
+
+        cameraButton.textContent =
+            "📹 Camera ON";
+
+        cameraButton.classList.add(
+            "active"
+        );
+
+    }else{
+
+        cameraButton.textContent =
+            "📹 Camera OFF";
+
+        cameraButton.classList.remove(
+            "active"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   MIC BUTTON DISPLAY
+========================================================= */
+
+function updateAdministratorMicButton(){
+
+    if(!localStream){
+
+        micButton.textContent =
+            "🎤 Mic";
+
+        return;
+
+    }
+
+    const tracks =
+        localStream.getAudioTracks();
+
+    if(!tracks.length){
+
+        return;
+
+    }
+
+    if(tracks[0].enabled){
+
+        micButton.textContent =
+            "🎤 Mic ON";
+
+        micButton.classList.add(
+            "active"
+        );
+
+    }else{
+
+        micButton.textContent =
+            "🔇 Mic OFF";
+
+        micButton.classList.remove(
+            "active"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   ADMINISTRATOR CAMERA STATUS
+========================================================= */
+
+function updateAdministratorCameraStatus(){
+
+    const status =
+        document.getElementById(
+            "adminCameraStatus"
+        );
+
+    if(administratorCameraOn){
+
+        status.textContent =
+            "📹";
+
+        status.classList.remove(
+            "off"
+        );
+
+    }else{
+
+        status.textContent =
+            "📹";
+
+        status.classList.add(
+            "off"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   ADMINISTRATOR MIC STATUS
+========================================================= */
+
+function updateAdministratorMicStatus(){
+
+    const status =
+        document.getElementById(
+            "adminMicStatus"
+        );
+
+    if(administratorMicOn){
+
+        status.textContent =
+            "🎤";
+
+        status.classList.remove(
+            "off"
+        );
+
+    }else{
+
+        status.textContent =
+            "🔇";
+
+        status.classList.add(
+            "off"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   ADMIN PANEL
+========================================================= */
+
+adminPanelButton.addEventListener(
+    "click",
+    function(){
+
+        if(adminPanel.style.display === "flex"){
+
+            adminPanel.style.display =
+                "none";
+
+        }else{
+
+            adminPanel.style.display =
+                "flex";
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   ADD WAITING PARTICIPANT
+========================================================= */
+
+function addWaitingParticipant(name){
+
+    const participant = {
+
+        id:
+            nextParticipantId++,
+
+        name:name
+
+    };
+
+    waitingParticipants.push(
+        participant
+    );
+
+    renderWaitingParticipants();
+
+}
+
+
+/* =========================================================
+   RENDER WAITING PARTICIPANTS
+========================================================= */
+
+function renderWaitingParticipants(){
+
+    waitingList.innerHTML = "";
+
+
+    if(waitingParticipants.length === 0){
+
+        waitingList.innerHTML =
+            '<p style="color:#777;">Nobody is waiting.</p>';
+
+        return;
+
+    }
+
+
+    waitingParticipants.forEach(
+        participant => {
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+            div.className =
+                "waitingParticipant";
+
+
+div.innerHTML = `
+
+    <div class="waitingParticipantName">
+        ${escapeHtml(participant.name)}
+    </div>
+
+    <button
+        class="allowButton"
+        onclick="allowParticipant('${participant.id}')"
+    >
+        Allow Entry
+    </button>
+
+    <button
+        class="denyButton"
+        onclick="denyParticipant('${participant.id}')"
+    >
+        Deny
+    </button>
+
+`;
+
+            waitingList.appendChild(
+                div
+            );
+
+        }
+    );
+
+}
+
+
+
+
+/* =========================================================
+   DENY PARTICIPANT
+========================================================= */
+
+async function denyParticipant(id){
+
+    console.log(
+        "Denying participant:",
+        id
+    );
+
+
+    const {
+        data,
+        error
+    } =
+    await supabaseClient
+        .from("conference_participants")
+        .update({
+
+            status: "denied",
+
+            updated_at:
+                new Date().toISOString()
+
+        })
+        .eq(
+            "id",
+            id
+        )
+        .select()
+        .single();
+
+
+    if(error){
+
+        console.error(
+            "DENY PARTICIPANT ERROR:",
+            error
+        );
+
+        alert(
+            "Unable to deny participant.\n\n" +
+            error.message
+        );
+
+        return;
+
+    }
+
+
+    console.log(
+        "Participant denied in database:",
+        data
+    );
+
+
+    waitingParticipants =
+        waitingParticipants.filter(
+            p => p.id !== id
+        );
+
+
+    renderWaitingParticipants();
+
+}
+
+/* =========================================================
+   RENDER PARTICIPANTS
+========================================================= */
+
+function renderParticipants(){
+
+    participantList.innerHTML =
+        "<strong>Participants</strong>";
+
+
+    if(participants.length === 0){
+
+        participantList.innerHTML +=
+            '<p style="color:#777;">No participants have entered.</p>';
+
+        return;
+
+    }
+
+
+    participants.forEach(
+        participant => {
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+            div.className =
+                "participantControl";
+
+
+            div.innerHTML = `
+
+                <div class="participantName">
+                    ${escapeHtml(participant.name)}
+                </div>
+
+                <div style="
+                    font-size:11px;
+                    color:#aaa;
+                    margin-bottom:8px;
+                ">
+
+                    Camera:
+                    ${participant.cameraOn ? "ON" : "OFF"}
+
+                    &nbsp;&nbsp;
+
+                    Mic:
+                    ${participant.micOn ? "ON" : "OFF"}
+
+                    ${
+                        participant.micLocked
+                        ? " 🔒"
+                        : ""
+                    }
+
+                </div>
+
+                <div class="controlRow">
+
+                    <button
+                        onclick="toggleParticipantCamera('${participant.id}')"
+                    >
+                        ${
+                            participant.cameraOn
+                            ? "Camera OFF"
+                            : "Camera ON"
+                        }
+                    </button>
+
+                    <button
+                        onclick="toggleParticipantMic('${participant.id}')"
+                    >
+                        ${
+                            participant.micOn
+                            ? "Mute Mic"
+                            : "Unmute Mic"
+                        }
+                    </button>
+
+                    <button
+                        class="${
+                            participant.micLocked
+                            ? "locked"
+                            : ""
+                        }"
+                        onclick="toggleMicLock('${participant.id}')"
+                    >
+                        ${
+                            participant.micLocked
+                            ? "Unlock Mic"
+                            : "🔒 Lock Mic"
+                        }
+                    </button>
+
+                    <button
+                        class="danger"
+                        onclick="removeParticipant('${participant.id}')"
+                    >
+                        Remove
+                    </button>
+
+                </div>
+
+            `;
+
+            participantList.appendChild(
+                div
+            );
+
+        }
+    );
+
+    renderAdminChatRecipients();
+
+}
+
+
+/* =========================================================
+   PARTICIPANT CAMERA
+========================================================= */
+
+function toggleParticipantCamera(id){
+
+    const participant =
+        participants.find(
+            p => p.id === id
+        );
+
+    if(!participant){
+
+        return;
+
+    }
+
+    participant.cameraOn =
+        !participant.cameraOn;
+
+
+    updateParticipantTile(
+        participant
+    );
+
+    renderParticipants();
+
+}
+
+
+/* =========================================================
+   PARTICIPANT MIC
+========================================================= */
+
+function toggleParticipantMic(id){
+
+    const participant =
+        participants.find(
+            p => p.id === id
+        );
+
+    if(!participant){
+
+        return;
+
+    }
+
+    /*
+       Locked microphone cannot be changed
+       by participant, but administrator can
+       always change it.
+    */
+
+    participant.micOn =
+        !participant.micOn;
+
+
+    updateParticipantTile(
+        participant
+    );
+
+    renderParticipants();
+
+}
+
+
+/* =========================================================
+   LOCK MICROPHONE
+========================================================= */
+
+function toggleMicLock(id){
+
+    const participant =
+        participants.find(
+            p => p.id === id
+        );
+
+    if(!participant){
+
+        return;
+
+    }
+
+
+    participant.micLocked =
+        !participant.micLocked;
+
+
+    /*
+       Locking microphone automatically mutes it.
+    */
+
+    if(participant.micLocked){
+
+        participant.micOn =
+            false;
+
+    }
+
+
+    updateParticipantTile(
+        participant
+    );
+
+    renderParticipants();
+
+}
+
+
+/* =========================================================
+   ASSIGN PARTICIPANT TILE
+========================================================= */
+
+function assignParticipantToTile(
+    participant
+){
+
+    const availableTiles = [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9
+    ];
+
+
+    for(
+        const slot of availableTiles
+    ){
+
+        const tile =
+            document.getElementById(
+                "tile" + slot
+            );
+
+
+        if(
+            !tile.dataset.participantId
+        ){
+
+            tile.dataset.participantId =
+                participant.id;
+
+            updateParticipantTile(
+                participant
+            );
+
+            return;
+
+        }
+
+    }
+
+
+    alert(
+        "The conference is full. Maximum 8 participants plus the administrator."
+    );
+
+}
+
+
+/* =========================================================
+   UPDATE PARTICIPANT TILE
+========================================================= */
+
+function updateParticipantTile(
+    participant
+){
+
+    const tile =
+        document.querySelector(
+            `.videoTile[data-participant-id="${participant.id}"]`
+        );
+
+
+    if(!tile){
+
+        return;
+
+    }
+
+
+    tile.classList.remove(
+        "empty"
+    );
+
+
+    /*
+       Remove old contents.
+    */
+
+    tile.innerHTML = "";
+
+
+    /*
+       Video element.
+    */
+
+    const video =
+        document.createElement(
+            "video"
+        );
+
+    video.autoplay =
+        true;
+
+    video.playsInline =
+        true;
+
+    video.muted =
+        true;
+
+
+    /*
+       For the prototype we don't have the
+       participant's remote stream yet.
+
+       Later this element will receive the
+       WebRTC remote MediaStream.
+    */
+
+    if(!participant.cameraOn){
+
+        video.style.display =
+            "none";
+
+    }
+
+
+    tile.appendChild(
+        video
+    );
+
+
+    /*
+       Camera-off display.
+    */
+
+    if(!participant.cameraOn){
+
+        const cameraOff =
+            document.createElement(
+                "div"
+            );
+
+        cameraOff.style.cssText = `
+            position:absolute;
+            inset:0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:#111;
+            color:#aaa;
+            font-size:16px;
+        `;
+
+        cameraOff.textContent =
+            "Camera Off";
+
+        tile.appendChild(
+            cameraOff
+        );
+
+    }
+
+
+    /*
+       Name label.
+    */
+
+    const label =
+        document.createElement(
+            "div"
+        );
+
+    label.className =
+        "tileLabel";
+
+    label.textContent =
+        participant.name;
+
+    tile.appendChild(
+        label
+    );
+
+
+    /*
+       Status icons.
+    */
+
+    const status =
+        document.createElement(
+            "div"
+        );
+
+    status.className =
+        "tileStatus";
+
+
+    const mic =
+        document.createElement(
+            "div"
+        );
+
+    mic.className =
+        "statusIcon";
+
+    mic.textContent =
+        participant.micOn
+        ? "🎤"
+        : "🔇";
+
+
+    if(!participant.micOn){
+
+        mic.classList.add(
+            "off"
+        );
+
+    }
+
+
+    const camera =
+        document.createElement(
+            "div"
+        );
+
+    camera.className =
+        "statusIcon";
+
+    camera.textContent =
+        participant.cameraOn
+        ? "📹"
+        : "📹";
+
+
+    if(!participant.cameraOn){
+
+        camera.classList.add(
+            "off"
+        );
+
+    }
+
+
+    status.appendChild(
+        mic
+    );
+
+    status.appendChild(
+        camera
+    );
+
+    tile.appendChild(
+        status
+    );
+
+
+    /*
+       Administrator controls.
+    */
+
+    if(isAdministrator){
+
+        const controls =
+            document.createElement(
+                "div"
+            );
+
+        controls.className =
+            "adminControls";
+
+
+        controls.innerHTML = `
+
+            <button
+                onclick="toggleParticipantCamera('${participant.id}')"
+            >
+                ${
+                    participant.cameraOn
+                    ? "Camera OFF"
+                    : "Camera ON"
+                }
+            </button>
+
+            <button
+                onclick="toggleParticipantMic('${participant.id}')"
+            >
+                ${
+                    participant.micOn
+                    ? "Mute"
+                    : "Unmute"
+                }
+            </button>
+
+            <button
+                onclick="toggleMicLock('${participant.id}')"
+            >
+                ${
+                    participant.micLocked
+                    ? "Unlock"
+                    : "🔒 Lock Mic"
+                }
+            </button>
+
+            <button
+                class="danger"
+                onclick="removeParticipant('${participant.id}')"
+            >
+                Remove
+            </button>
+
+        `;
+
+        tile.appendChild(
+            controls
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   CLEAR PARTICIPANT TILE
+========================================================= */
+
+function clearParticipantTile(
+    tile
+){
+
+    tile.removeAttribute(
+        "data-participant-id"
+    );
+
+    tile.className =
+        "videoTile empty";
+
+    tile.innerHTML = `
+
+        <div class="tileLabel">
+            Waiting for Participant
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   LEAVE
+========================================================= */
+
+leaveButton.addEventListener(
+    "click",
+    async function(){
+
+        if(
+            !confirm(
+                "Leave this conference?"
+            )
+        ){
+
+            return;
+
+        }
+
+
+        /*
+         * Make sure we have the participant ID.
+         */
+        const participantId =
+            window.myParticipantId;
+
+        console.log(
+            "LEAVE CLICKED - Participant ID:",
+            participantId
+        );
+
+
+        if(!participantId){
+
+            console.error(
+                "LEAVE ERROR: No participant ID found."
+            );
+
+            alert(
+                "Unable to identify your conference session."
+            );
+
+            return;
+
+        }
+
+
+        /*
+         * DELETE participant record from Supabase.
+         */
+const {
+    data,
+    error
+} =
+await supabaseClient
+    .from(
+        "conference_participants"
+    )
+    .update({
+        status: "left",
+        updated_at:
+            new Date().toISOString()
+    })
+    .eq(
+        "id",
+        participantId
+    )
+    .select()
+    .single();
+
+        /*
+         * Check for database error.
+         */
+        if(error){
+
+            console.error(
+                "LEAVE DELETE ERROR:",
+                error
+            );
+
+            alert(
+                "Unable to leave the conference.\n\n" +
+                error.message
+            );
+
+            return;
+
+        }
+
+
+        console.log(
+    "LEAVE DELETE SUCCESS:",
+    participantId
+);
+
+
+        /*
+         * Clear our stored participant ID.
+         */
+        window.myParticipantId =
+            null;
+
+
+        /*
+         * Stop local camera/microphone.
+         */
+        if(localStream){
+
+            localStream
+                .getTracks()
+                .forEach(
+                    track => track.stop()
+                );
+
+            localStream =
+                null;
+
+        }
+
+
+        /*
+         * Stop administrator video
+         * if it exists on this browser.
+         */
+        if(adminVideo.srcObject){
+
+            adminVideo.srcObject
+                .getTracks()
+                .forEach(
+                    track => track.stop()
+                );
+
+            adminVideo.srcObject =
+                null;
+
+        }
+
+
+        /*
+         * Reload the participant page.
+         */
+        window.location.reload();
+
+    }
+);
+
+
+/* =========================================================
+   CHAT
+========================================================= */
+
+let chatChannel = null;
+let adminSelectedChatParticipants = new Set();
+
+function initializeChat(){
+
+    chatChannel = supabaseClient
+        .channel("conference-chat-" + ROOM_ID)
+        .on("broadcast", { event: "chat" }, function(payload){
+
+            const message = payload.payload || {};
+            if(message.roomId !== ROOM_ID){ return; }
+
+            if(isAdministrator){
+                if(message.recipientId === "ADMIN" || message.senderId !== "ADMIN"){
+                    appendChatMessage(adminChatMessages, message.senderId === "ADMIN", message.senderName || "Participant", message.text);
+                }
+            }else{
+                if(message.recipientId === window.myParticipantId){
+                    appendChatMessage(participantChatMessages, message.senderId === window.myParticipantId, message.senderName || "Administrator", message.text);
+                }
+            }
+        })
+        .subscribe(function(status){ console.log("Chat channel:", status); });
+}
+
+function appendChatMessage(container, mine, senderName, text){
+    if(!container){ return; }
+    const div = document.createElement("div");
+    div.className = "chatMessage" + (mine ? " mine" : "");
+    div.innerHTML = `<div class="chatMessageMeta">${escapeHtml(senderName)}</div><div>${escapeHtml(text)}</div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function renderAdminChatRecipients(){
+    if(!adminChatRecipients){ return; }
+    adminChatRecipients.innerHTML = "";
+    if(participants.length === 0){
+        adminChatRecipients.innerHTML = '<div style="color:#777;">No active participants.</div>';
+        return;
+    }
+    participants.forEach(function(participant){
+        const label = document.createElement("label");
+        label.className = "chatRecipient";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = participant.id;
+        checkbox.checked = adminSelectedChatParticipants.has(String(participant.id));
+        checkbox.addEventListener("change", function(){
+            const id = String(participant.id);
+            if(this.checked) adminSelectedChatParticipants.add(id);
+            else adminSelectedChatParticipants.delete(id);
+        });
+        const text = document.createElement("span");
+        text.textContent = participant.name;
+        label.appendChild(checkbox);
+        label.appendChild(text);
+        adminChatRecipients.appendChild(label);
+    });
+}
+
+adminChatButton.addEventListener("click", function(){
+    if(adminChatPanel.style.display === "flex"){
+        adminChatPanel.style.display = "none";
+    }else{
+        renderAdminChatRecipients();
+        adminChatPanel.style.display = "flex";
+    }
+});
+
+closeAdminChat.addEventListener("click", function(){ adminChatPanel.style.display = "none"; });
+
+adminChatSend.addEventListener("click", async function(){
+    const selected = Array.from(adminSelectedChatParticipants);
+    const text = adminChatInput.value.trim();
+    if(selected.length === 0){ alert("Please select at least one participant."); return; }
+    if(!text || !chatChannel){ return; }
+    for(const id of selected){
+        await chatChannel.send({ type:"broadcast", event:"chat", payload:{ roomId:ROOM_ID, senderId:"ADMIN", senderName:"Administrator", recipientId:id, text:text, sentAt:new Date().toISOString() } });
+    }
+    appendChatMessage(adminChatMessages, true, "Administrator", text);
+    adminChatInput.value = "";
+});
+
+adminChatInput.addEventListener("keydown", function(event){ if(event.key === "Enter"){ event.preventDefault(); adminChatSend.click(); } });
+
+participantChatSend.addEventListener("click", async function(){
+    const text = participantChatInput.value.trim();
+    if(!text || !chatChannel || !window.myParticipantId){ return; }
+    await chatChannel.send({ type:"broadcast", event:"chat", payload:{ roomId:ROOM_ID, senderId:window.myParticipantId, senderName:nameInput.value.trim() || "Participant", recipientId:"ADMIN", text:text, sentAt:new Date().toISOString() } });
+    appendChatMessage(participantChatMessages, true, "You", text);
+    participantChatInput.value = "";
+});
+
+participantChatInput.addEventListener("keydown", function(event){ if(event.key === "Enter"){ event.preventDefault(); participantChatSend.click(); } });
+participantChatButton.addEventListener("click", function(){ participantChatInput.focus(); });
+
+micButtonParticipant.addEventListener("click", function(){
+    if(!localStream) return;
+    const tracks = localStream.getAudioTracks();
+    if(!tracks.length) return;
+    tracks.forEach(track => track.enabled = !track.enabled);
+    const enabled = tracks[0].enabled;
+    micButtonParticipant.textContent = enabled ? "🎤 Mic ON" : "🔇 Mic OFF";
+    micButtonParticipant.classList.toggle("active", enabled);
+});
+
+cameraButtonParticipant.addEventListener("click", function(){
+    if(!localStream) return;
+    const tracks = localStream.getVideoTracks();
+    if(!tracks.length) return;
+    tracks.forEach(track => track.enabled = !track.enabled);
+    const enabled = tracks[0].enabled;
+    participantLocalVideo.style.display = enabled ? "block" : "none";
+    participantVideoPlaceholder.style.display = enabled ? "none" : "flex";
+    cameraButtonParticipant.textContent = enabled ? "📹 Camera ON" : "📹 Camera OFF";
+    cameraButtonParticipant.classList.toggle("active", enabled);
+});
+
+leaveButtonParticipant.addEventListener("click", function(){ leaveButton.click(); });
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+function escapeHtml(
+    text
+){
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+    div.textContent =
+        text;
+
+    return div.innerHTML;
+
+}
+
+
+/* =========================================================
+   DEMO ADMIN WAITING PARTICIPANTS
+========================================================= */
+
+/*
+   This is ONLY for testing the interface.
+
+   When running:
+
+       index.html?admin=true
+
+   you can use these sample requests.
+
+   They will be removed when we connect the
+   real backend.
+*/
+
+if(isAdministrator){
+
+}
+
+/* =========================================================
+   LOAD EXISTING ROOM PARTICIPANTS
+========================================================= */
+
+async function loadConferenceParticipants(){
+
+    console.log(
+        "Loading participants for room:",
+        ROOM_ID
+    );
+
+
+    const {
+        data,
+        error
+    } =
+    await supabaseClient
+        .from("conference_participants")
+        .select("*")
+        .eq(
+            "room_id",
+            ROOM_ID
+        )
+        .in(
+            "status",
+            [
+                "waiting",
+                "approved"
+            ]
+        )
+        .order(
+            "created_at",
+            {
+                ascending:true
+            }
+        );
+
+
+    if(error){
+
+        console.error(
+            "LOAD PARTICIPANTS ERROR:",
+            error
+        );
+
+        return;
+
+    }
+
+
+    console.log(
+        "Existing participants:",
+        data
+    );
+
+
+    /*
+       Clear current arrays.
+    */
+
+    waitingParticipants =
+        [];
+
+    participants =
+        [];
+
+
+    /*
+       Rebuild the administrator state.
+    */
+
+    data.forEach(
+        participant => {
+
+            if(
+                participant.status ===
+                "waiting"
+            ){
+
+                waitingParticipants.push({
+
+                    id:
+                        participant.id,
+
+                    name:
+                        participant.participant_name,
+
+                    databaseRecord:
+                        participant
+
+                });
+
+            }
+
+
+            if(
+                participant.status ===
+                "approved"
+            ){
+
+                participants.push({
+
+                    id:
+                        participant.id,
+
+                    name:
+                        participant.participant_name,
+
+                    cameraOn:
+                        participant.camera_on,
+
+                    micOn:
+                        participant.mic_on,
+
+                    micLocked:
+                        participant.mic_locked
+
+                });
+
+            }
+
+        }
+    );
+
+
+    renderWaitingParticipants();
+
+    renderParticipants();
+
+
+    console.log(
+        "Participant state restored."
+    );
+
+}
+
+/* =========================================================
+   START APPLICATION
+========================================================= */
+
+initializeChat();
+
+initializeApplication();
+
+
+if(isAdministrator){
+
+    loadConferenceParticipants();
+
+    subscribeToConference();
+
+}
+
+</script>
+
+
+</body>
+</html>
