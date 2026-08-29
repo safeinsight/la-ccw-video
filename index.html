@@ -3335,25 +3335,37 @@ function updateCameraButton(){
 
 function updateAdministratorMicButton(){
 
-if(!localStream){
+    if(!localStream){
 
-    micButton.textContent =
-        "🔇 Mic OFF";
+        micButton.textContent =
+            "🔇 Mic OFF";
 
-    micButton.classList.remove(
-        "active"
-    );
+        micButton.classList.remove(
+            "active"
+        );
 
-    return;
-}
+        micButton.style.backgroundColor =
+            "#777";
+
+        return;
+    }
 
     const tracks =
         localStream.getAudioTracks();
 
     if(!tracks.length){
 
-        return;
+        micButton.textContent =
+            "🔇 Mic OFF";
 
+        micButton.classList.remove(
+            "active"
+        );
+
+        micButton.style.backgroundColor =
+            "#777";
+
+        return;
     }
 
     if(tracks[0].enabled){
@@ -3365,6 +3377,9 @@ if(!localStream){
             "active"
         );
 
+        micButton.style.backgroundColor =
+            "#147a14";
+
     }else{
 
         micButton.textContent =
@@ -3373,6 +3388,9 @@ if(!localStream){
         micButton.classList.remove(
             "active"
         );
+
+        micButton.style.backgroundColor =
+            "#777";
 
     }
 
