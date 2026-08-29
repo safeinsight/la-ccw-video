@@ -2240,7 +2240,28 @@ function enterConference(participant){
      * camera/microphone is attached to
      * a local video element.
      */
+   
     attachLocalParticipantVideo();
+
+        /*
+     * Set initial participant camera/mic
+     * button appearance.
+     */
+    if(participant.cameraOn){
+        cameraButtonParticipant.classList.add("active");
+        cameraButtonParticipant.textContent = "📹 Camera ON";
+    }else{
+        cameraButtonParticipant.classList.remove("active");
+        cameraButtonParticipant.textContent = "📹 Camera OFF";
+    }
+
+    if(participant.micOn){
+        micButtonParticipant.classList.add("active");
+        micButtonParticipant.textContent = "🎤 Mic ON";
+    }else{
+        micButtonParticipant.classList.remove("active");
+        micButtonParticipant.textContent = "🔇 Mic OFF";
+    }
 
     /*
      * Update connection indicator.
