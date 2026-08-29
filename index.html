@@ -3247,27 +3247,24 @@ async function requestAdministratorMedia(){
 
         localStream =
             await navigator.mediaDevices.getUserMedia({
-                video:true,
                 audio:true
             });
 
-        administratorCameraOn =
-            true;
-
         administratorMicOn =
-            true;
-
-        updateCameraButton();
+            false;
 
         updateAdministratorMicButton();
 
     }catch(error){
 
         alert(
-            "Camera and microphone permission was not granted."
+            "Microphone permission was not granted."
         );
 
-        console.error(error);
+        console.error(
+            "Administrator microphone error:",
+            error
+        );
 
     }
 
