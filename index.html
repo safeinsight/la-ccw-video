@@ -1733,7 +1733,16 @@ const micButtonParticipant = document.getElementById("micButtonParticipant");
 const cameraButtonParticipant = document.getElementById("cameraButtonParticipant");
 const leaveButtonParticipant = document.getElementById("leaveButtonParticipant");
 
+function updateAdminCameraButton(text){
 
+    adminCameraButton.textContent = text;
+
+    adminCameraButton.classList.toggle(
+        "logoActive",
+        text === "Show Logo"
+    );
+
+}
 /* =========================================================
    INITIALIZE
 ========================================================= */
@@ -3020,9 +3029,8 @@ adminCameraButton.addEventListener(
                 administratorCameraOn =
                     true;
 
-                adminCameraButton.textContent =
-                    "Show Logo";
-
+                updateAdminCameraButton("Show Logo");
+                
                 updateAdministratorCameraStatus();
 
             }catch(error){
@@ -3065,9 +3073,8 @@ adminCameraButton.addEventListener(
             administratorCameraOn =
                 false;
 
-            adminCameraButton.textContent =
-                "Show Camera";
-
+            updateAdminCameraButton("Show Camera");
+           
             updateAdministratorCameraStatus();
 
         }
