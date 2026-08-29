@@ -277,6 +277,9 @@ input {
     color: #ff4b4b;
 }
 
+    .statusIcon.on {
+    color: #62ff62;
+}
 
 /* =========================================================
    ADMIN CONTROL OVERLAY
@@ -3417,10 +3420,18 @@ function updateAdministratorCameraStatus(){
             "off"
         );
 
+        status.classList.add(
+            "on"
+        );
+
     }else{
 
         status.textContent =
             "📹";
+
+        status.classList.remove(
+            "on"
+        );
 
         status.classList.add(
             "off"
@@ -3451,10 +3462,18 @@ function updateAdministratorMicStatus(){
             "off"
         );
 
+        status.classList.add(
+            "on"
+        );
+
     }else{
 
         status.textContent =
             "🔇";
+
+        status.classList.remove(
+            "on"
+        );
 
         status.classList.add(
             "off"
@@ -4086,13 +4105,19 @@ function updateParticipantTile(
         : "🔇";
 
 
-    if(!participant.micOn){
+if(participant.micOn){
 
-        mic.classList.add(
-            "off"
-        );
+    mic.classList.add(
+        "on"
+    );
 
-    }
+}else{
+
+    mic.classList.add(
+        "off"
+    );
+
+}
 
 
     const camera =
@@ -4109,13 +4134,19 @@ function updateParticipantTile(
         : "📹";
 
 
-    if(!participant.cameraOn){
+if(participant.cameraOn){
 
-        camera.classList.add(
-            "off"
-        );
+    camera.classList.add(
+        "on"
+    );
 
-    }
+}else{
+
+    camera.classList.add(
+        "off"
+    );
+
+}
 
 
     status.appendChild(
