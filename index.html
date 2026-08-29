@@ -396,6 +396,12 @@ input {
     color: #fff;
 }
 
+#micButtonParticipant.active,
+#cameraButtonParticipant.active {
+    background: #147a14;
+    color: #fff;
+}
+
 .toolbarButton.danger {
     background: #8b0000;
 }
@@ -1411,7 +1417,7 @@ input {
             <button type="button" class="toolbarButton redButton" onclick="window.open('https://safeinsight.acadio.com/auth/signin?go=/dashboard','_blank')">🎯 Training</button>
             <button class="toolbarButton" id="micButtonParticipant">🎤 Mic</button>
             <button class="toolbarButton redButton" id="leaveButtonParticipant">EXIT ROOM</button>
-            <button class="toolbarButton" id="cameraButtonParticipant">📹 Camera</button>
+            <button class="toolbarButton" id="cameraButtonParticipant">📹 Camera ON</button>
             <button type="button" class="toolbarButton redButton" onclick="window.open('https://app.acuityscheduling.com/schedule/0fd3042a/appointment/56783178/calendar/14314778?appointmentTypeIds[]=56783178','_blank')">📅 Schedule</button>
         </div>
 
@@ -1839,6 +1845,22 @@ knockButton.addEventListener(
                     audio:true
                 });
 
+        const audioTracks =
+    localStream.getAudioTracks();
+
+audioTracks.forEach(
+    track => {
+        track.enabled = false;
+    }
+);
+
+micButtonParticipant.textContent =
+    "🔇 Mic OFF";
+
+micButtonParticipant.classList.remove(
+    "active"
+);
+
         }catch(error){
 
             console.log(
@@ -1879,7 +1901,7 @@ knockButton.addEventListener(
                     true,
 
                 mic_on:
-                    true,
+                    false,
 
                 mic_locked:
                     false
