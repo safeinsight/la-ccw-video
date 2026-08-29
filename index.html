@@ -113,8 +113,8 @@ input {
 
 #videoGrid {
 
-    width: 1000%;
-    height: 85%;
+    width: 100%;
+    height: 100%;
 
     display: grid;
 
@@ -135,7 +135,6 @@ input {
 .videoTile {
 
     position: relative;
-    aspect-ratio: 16 / 9;
     background: #111;
 
     overflow: hidden;
@@ -1124,6 +1123,43 @@ input {
 @media (orientation:portrait) and (max-width:900px) { #participantView { flex-direction:column; } }
 @media (orientation:landscape), (min-width:901px) { #participantView { flex-direction:row; } }
 @media (max-width:600px) { .toolbarView { gap:4px; } #adminChatPanel { top:50px; bottom:58px; width:100%; } }
+
+/* =========================================================
+   DESKTOP ADMINISTRATOR LAYOUT
+========================================================= */
+
+@media (min-width: 901px) {
+
+    /*
+     * Video area occupies approximately 70%
+     * of the available screen width.
+     */
+    #administratorView {
+        width: 70%;
+        height: 100%;
+    }
+
+    /*
+     * Video grid fills the administrator
+     * video area.
+     */
+    #videoGrid {
+        width: 100%;
+        height: 100%;
+    }
+
+    /*
+     * Participant control panel occupies
+     * the remaining 30%.
+     */
+    #adminPanel {
+        width: 30%;
+        top: 72px;
+        bottom: 64px;
+        display: flex;
+    }
+
+}
 
 /* =========================================================
    HIDDEN
