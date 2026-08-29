@@ -2888,6 +2888,16 @@ async function removeParticipant(id){
             p => p.id !== id
         );
 
+    delete adminChatThreads[String(id)];
+
+adminSelectedChatParticipants.delete(
+    String(id)
+);
+
+if(openAdminChatThread === String(id)){
+    openAdminChatThread = null;
+}
+
     /*
      * Clear the participant's video tile.
      */
