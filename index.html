@@ -148,6 +148,11 @@ input {
     min-height: 0;
 }
 
+.videoTile.chatAlert {
+    outline: 4px solid #ff0000;
+    outline-offset: -4px;
+}
+
 .videoTile video {
 
     width: 100%;
@@ -3739,20 +3744,25 @@ function assignParticipantToTile(
             );
 
 
-        if(
-            !tile.dataset.participantId
-        ){
+       if(
+    !tile.dataset.participantId
+){
+    tile.dataset.participantId =
+        participant.id;
 
-            tile.dataset.participantId =
-                participant.id;
-
-            updateParticipantTile(
-                participant
-            );
-
-            return;
-
+    tile.addEventListener(
+        "click",
+        function(){
+            tile.classList.remove("chatAlert");
         }
+    );
+
+    updateParticipantTile(
+        participant
+    );
+
+    return;
+}
 
     }
 
@@ -4221,12 +4231,22 @@ function initializeChat(){
                     const senderId = String(message.senderId || "");
                     if(senderId !== "ADMIN"){
                         if(!adminChatThreads[senderId]) adminChatThreads[senderId] = [];
-                        adminChatThreads[senderId].push({
-                            mine:false,
-                            senderName:message.senderName || "Participant",
-                            text:message.text
-                        });
+adminChatThreads[senderId].push({
+    mine:false,
+    senderName:message.senderName || "Participant",
+    text:message.text
+});
+
+const chatTile = document.querySelector(
+    `.videoTile[data-participant-id="${senderId}"]`
+);
+
+if(chatTile){
+    chatTile.classList.add("chatAlert");
+}
                     }
+
+                    
                     appendChatMessage(adminChatMessages, false, message.senderName || "Participant", message.text);
                     renderAdminChatRecipients();
                 }
