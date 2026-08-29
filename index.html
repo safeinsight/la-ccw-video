@@ -4240,6 +4240,70 @@ let adminSelectedChatParticipants = new Set();
 let adminChatThreads = {};
 let openAdminChatThread = null;
 
+function playAdminChatNotification(){
+
+    try{
+
+        const AudioContext =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+        const audioContext =
+            new AudioContext();
+
+        const oscillator =
+            audioContext.createOscillator();
+
+        const gain =
+            audioContext.createGain();
+
+        oscillator.type = "sine";
+
+        oscillator.frequency.setValueAtTime(
+            880,
+            audioContext.currentTime
+        );
+
+        oscillator.frequency.setValueAtTime(
+            660,
+            audioContext.currentTime + 0.12
+        );
+
+        gain.gain.setValueAtTime(
+            0.0001,
+            audioContext.currentTime
+        );
+
+        gain.gain.exponentialRampToValueAtTime(
+            0.25,
+            audioContext.currentTime + 0.01
+        );
+
+        gain.gain.exponentialRampToValueAtTime(
+            0.0001,
+            audioContext.currentTime + 0.25
+        );
+
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+
+        oscillator.start();
+
+        oscillator.stop(
+            audioContext.currentTime + 0.25
+        );
+
+    }catch(error){
+
+        console.warn(
+            "Chat notification sound unavailable:",
+            error
+        );
+
+    }
+
+}
+
 function initializeChat(){
 
     chatChannel = supabaseClient
@@ -4260,19 +4324,21 @@ adminChatThreads[senderId].push({
     text:message.text
 });
 
+playAdminChatNotification();
+
 const chatTile = document.querySelector(
     `.videoTile[data-participant-id="${senderId}"]`
 );
 
 if(chatTile){
     chatTile.classList.add("chatAlert");
+    }
 }
-                    }
 
                     
-                    appendChatMessage(adminChatMessages, false, message.senderName || "Participant", message.text);
-                    renderAdminChatRecipients();
-                }
+            appendChatMessage(adminChatMessages, false, message.senderName || "Participant", message.text);
+            renderAdminChatRecipients();
+        }
             }else{
                 if(message.recipientId === window.myParticipantId){
                     appendChatMessage(participantChatMessages, message.senderId === window.myParticipantId, message.senderName || "Administrator", message.text);
