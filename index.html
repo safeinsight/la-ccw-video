@@ -2187,6 +2187,46 @@ function attachLocalParticipantVideo(){
     participantLocalVideo.style.display = "block";
     participantVideoPlaceholder.style.display = "none";
 
+    const videoTracks =
+        localStream.getVideoTracks();
+
+    const audioTracks =
+        localStream.getAudioTracks();
+
+    if(videoTracks.length){
+
+        const cameraOn =
+            videoTracks[0].enabled;
+
+        cameraButtonParticipant.classList.toggle(
+            "active",
+            cameraOn
+        );
+
+        cameraButtonParticipant.textContent =
+            cameraOn
+            ? "📹 Camera ON"
+            : "📹 Camera OFF";
+
+    }
+
+    if(audioTracks.length){
+
+        const micOn =
+            audioTracks[0].enabled;
+
+        micButtonParticipant.classList.toggle(
+            "active",
+            micOn
+        );
+
+        micButtonParticipant.textContent =
+            micOn
+            ? "🎤 Mic ON"
+            : "🔇 Mic OFF";
+
+    }
+
 }
 
 /* =========================================================
@@ -2242,26 +2282,6 @@ function enterConference(participant){
      */
    
     attachLocalParticipantVideo();
-
-        /*
-     * Set initial participant camera/mic
-     * button appearance.
-     */
-    if(participant.cameraOn){
-        cameraButtonParticipant.classList.add("active");
-        cameraButtonParticipant.textContent = "📹 Camera ON";
-    }else{
-        cameraButtonParticipant.classList.remove("active");
-        cameraButtonParticipant.textContent = "📹 Camera OFF";
-    }
-
-    if(participant.micOn){
-        micButtonParticipant.classList.add("active");
-        micButtonParticipant.textContent = "🎤 Mic ON";
-    }else{
-        micButtonParticipant.classList.remove("active");
-        micButtonParticipant.textContent = "🔇 Mic OFF";
-    }
 
     /*
      * Update connection indicator.
