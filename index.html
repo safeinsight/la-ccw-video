@@ -3335,14 +3335,17 @@ function updateCameraButton(){
 
 function updateAdministratorMicButton(){
 
-    if(!localStream){
+if(!localStream){
 
-        micButton.textContent =
-            "🎤 Mic";
+    micButton.textContent =
+        "🔇 Mic OFF";
 
-        return;
+    micButton.classList.remove(
+        "active"
+    );
 
-    }
+    return;
+}
 
     const tracks =
         localStream.getAudioTracks();
