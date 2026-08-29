@@ -3084,47 +3084,6 @@ micButton.addEventListener(
 
 
 /* =========================================================
-   ADMIN CAMERA BUTTON
-========================================================= */
-
-cameraButton.addEventListener(
-    "click",
-    function(){
-
-        if(!localStream){
-
-            requestAdministratorMedia();
-
-            return;
-
-        }
-
-        const videoTracks =
-            localStream.getVideoTracks();
-
-        if(videoTracks.length === 0){
-
-            return;
-
-        }
-
-        const currentlyEnabled =
-            videoTracks[0].enabled;
-
-        videoTracks.forEach(
-            track => {
-                track.enabled =
-                    !currentlyEnabled;
-            }
-        );
-
-        updateCameraButton();
-
-    }
-);
-
-
-/* =========================================================
    REQUEST ADMIN MEDIA
 ========================================================= */
 
