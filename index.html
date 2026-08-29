@@ -1057,6 +1057,15 @@ input {
     font-weight:bold;
 }
 
+.chatRecipient.selected {
+    background: #147a14;
+    color: #fff;
+}
+
+.chatRecipient.selected .chatRecipientName {
+    font-weight: bold;
+}
+
 .chatThreadBadge {
     min-width:22px;
     height:20px;
@@ -4299,9 +4308,8 @@ await supabaseClient
 ========================================================= */
 
 let chatChannel = null;
-let adminSelectedChatParticipants = new Set();
 let adminChatThreads = {};
-let openAdminChatThread = null;
+let openAdminChatThread = "ALL";
 
 function playAdminChatNotification(){
 
@@ -4421,116 +4429,360 @@ function appendChatMessage(container, mine, senderName, text){
 }
 
 function renderAdminChatRecipients(){
-    if(!adminChatRecipients){ return; }
 
-    adminChatRecipients.innerHTML = "";
-
-    if(participants.length === 0){
-        adminChatRecipients.innerHTML = '<div style="color:#777;">No active participants.</div>';
+    if(!adminChatRecipients){
         return;
     }
 
-    participants.forEach(function(participant){
-        const id = String(participant.id);
-        const messages = adminChatThreads[id] || [];
+    adminChatRecipients.innerHTML = "";
 
-        const branch = document.createElement("div");
-        branch.className = "chatRecipientBranch";
+    /*
+     * Chat All Users
+     */
+    const allLabel =
+        document.createElement("div");
 
-        const label = document.createElement("label");
-        label.className = "chatRecipient";
+    allLabel.className =
+        "chatRecipient" +
+        (
+            openAdminChatThread === "ALL"
+                ? " selected"
+                : ""
+        );
 
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.value = id;
-        checkbox.checked = adminSelectedChatParticipants.has(id);
-        checkbox.addEventListener("click", function(event){
-            event.stopPropagation();
-        });
-        checkbox.addEventListener("change", function(){
-            if(this.checked) adminSelectedChatParticipants.add(id);
-            else adminSelectedChatParticipants.delete(id);
-        });
+    const allName =
+        document.createElement("span");
 
-        const name = document.createElement("span");
-        name.className = "chatRecipientName";
-        name.textContent = participant.name;
+    allName.className =
+        "chatRecipientName";
 
-        const badge = document.createElement("span");
-        badge.className = "chatThreadBadge";
-        badge.textContent = messages.length;
-        badge.title = messages.length + " message" + (messages.length === 1 ? "" : "s");
+    allName.textContent =
+        "Chat All Users";
 
-        label.appendChild(checkbox);
-        label.appendChild(name);
-        label.appendChild(badge);
+    allLabel.appendChild(
+        allName
+    );
 
-        const preview = document.createElement("span");
-        preview.className = "chatThreadPreview";
-        if(messages.length){
-            const last = messages[messages.length - 1];
-            preview.textContent = (last.mine ? "You: " : last.senderName + ": ") + last.text;
-        }else{
-            preview.textContent = "No messages yet";
-        }
+    allLabel.addEventListener(
+        "click",
+        function(){
 
-        const thread = document.createElement("div");
-        thread.className = "chatThread" + (openAdminChatThread === id ? " open" : "");
+            openAdminChatThread =
+                "ALL";
 
-        if(messages.length){
-            messages.forEach(function(message){
-                const item = document.createElement("div");
-                item.className = "chatThreadMessage" + (message.mine ? " mine" : "");
-                item.innerHTML = `<div class="chatThreadMessageMeta">${escapeHtml(message.mine ? "Administrator" : message.senderName)}</div><div>${escapeHtml(message.text)}</div>`;
-                thread.appendChild(item);
-            });
-        }else{
-            thread.innerHTML = '<div class="chatThreadEmpty">No conversation with this participant yet.</div>';
-        }
-
-        label.addEventListener("click", function(){
-            openAdminChatThread = openAdminChatThread === id ? null : id;
             renderAdminChatRecipients();
-        });
+            renderAdminChatMessages();
 
-        branch.appendChild(label);
-        branch.appendChild(preview);
-        branch.appendChild(thread);
-        adminChatRecipients.appendChild(branch);
-    });
+        }
+    );
+
+    adminChatRecipients.appendChild(
+        allLabel
+    );
+
+
+    /*
+     * Individual active participants
+     */
+    participants.forEach(
+        function(participant){
+
+            const id =
+                String(participant.id);
+
+            const messages =
+                adminChatThreads[id] || [];
+
+            const label =
+                document.createElement("div");
+
+            label.className =
+                "chatRecipient" +
+                (
+                    openAdminChatThread === id
+                        ? " selected"
+                        : ""
+                );
+
+            const name =
+                document.createElement("span");
+
+            name.className =
+                "chatRecipientName";
+
+            name.textContent =
+                participant.name;
+
+            const badge =
+                document.createElement("span");
+
+            badge.className =
+                "chatThreadBadge";
+
+            badge.textContent =
+                messages.length;
+
+            badge.title =
+                messages.length +
+                " message" +
+                (
+                    messages.length === 1
+                        ? ""
+                        : "s"
+                );
+
+            label.appendChild(
+                name
+            );
+
+            label.appendChild(
+                badge
+            );
+
+            label.addEventListener(
+                "click",
+                function(){
+
+                    openAdminChatThread =
+                        id;
+
+                    renderAdminChatRecipients();
+                    renderAdminChatMessages();
+
+                }
+            );
+
+            adminChatRecipients.appendChild(
+                label
+            );
+
+        }
+    );
+
 }
 
-adminChatButton.addEventListener("click", function(){
-    if(adminChatPanel.style.display === "flex"){
-        adminChatPanel.style.display = "none";
-    }else{
-        renderAdminChatRecipients();
-        adminChatPanel.style.display = "flex";
+function renderAdminChatMessages(){
+
+    if(!adminChatMessages){
+        return;
     }
-});
+
+    adminChatMessages.innerHTML = "";
+
+
+    /*
+     * CHAT ALL USERS
+     */
+    if(openAdminChatThread === "ALL"){
+
+        const allMessages = [];
+
+        Object.keys(adminChatThreads).forEach(
+            function(id){
+
+                const messages =
+                    adminChatThreads[id] || [];
+
+                messages.forEach(
+                    function(message){
+
+                        allMessages.push({
+                            ...message,
+                            participantId:id
+                        });
+
+                    }
+                );
+
+            }
+        );
+
+        if(!allMessages.length){
+
+            adminChatMessages.innerHTML =
+                '<div class="chatThreadEmpty">No messages yet.</div>';
+
+            return;
+
+        }
+
+        allMessages.forEach(
+            function(message){
+
+                appendChatMessage(
+                    adminChatMessages,
+                    message.mine,
+                    message.mine
+                        ? "Administrator"
+                        : message.senderName,
+                    message.text
+                );
+
+            }
+        );
+
+        return;
+    }
+
+
+    /*
+     * INDIVIDUAL PARTICIPANT
+     */
+    const messages =
+        adminChatThreads[openAdminChatThread] || [];
+
+    if(!messages.length){
+
+        adminChatMessages.innerHTML =
+            '<div class="chatThreadEmpty">No conversation with this participant yet.</div>';
+
+        return;
+
+    }
+
+    messages.forEach(
+        function(message){
+
+            appendChatMessage(
+                adminChatMessages,
+                message.mine,
+                message.mine
+                    ? "Administrator"
+                    : message.senderName,
+                message.text
+            );
+
+        }
+    );
+
+}
+
+adminChatButton.addEventListener(
+    "click",
+    function(){
+
+        if(
+            adminChatPanel.style.display === "flex"
+        ){
+
+            adminChatPanel.style.display =
+                "none";
+
+        }else{
+
+            if(!openAdminChatThread){
+                openAdminChatThread =
+                    "ALL";
+            }
+
+            renderAdminChatRecipients();
+            renderAdminChatMessages();
+
+            adminChatPanel.style.display =
+                "flex";
+
+        }
+
+    }
+);
 
 closeAdminChat.addEventListener("click", function(){ adminChatPanel.style.display = "none"; });
 
-adminChatSend.addEventListener("click", async function(){
-    const selected = Array.from(adminSelectedChatParticipants);
-    const text = adminChatInput.value.trim();
-    if(selected.length === 0){ alert("Please select at least one participant."); return; }
-    if(!text || !chatChannel){ return; }
-    for(const id of selected){
-        await chatChannel.send({ type:"broadcast", event:"chat", payload:{ roomId:ROOM_ID, senderId:"ADMIN", senderName:"Administrator", recipientId:id, text:text, sentAt:new Date().toISOString() } });
+adminChatSend.addEventListener(
+    "click",
+    async function(){
 
-        if(!adminChatThreads[id]) adminChatThreads[id] = [];
-        adminChatThreads[id].push({
-            mine:true,
-            senderName:"Administrator",
-            text:text
-        });
+        const text =
+            adminChatInput.value.trim();
+
+        if(!text || !chatChannel){
+            return;
+        }
+
+
+        /*
+         * CHAT ALL USERS
+         */
+        if(openAdminChatThread === "ALL"){
+
+            for(
+                const participant of participants
+            ){
+
+                const id =
+                    String(participant.id);
+
+                await chatChannel.send({
+                    type:"broadcast",
+                    event:"chat",
+                    payload:{
+                        roomId:ROOM_ID,
+                        senderId:"ADMIN",
+                        senderName:"Administrator",
+                        recipientId:id,
+                        text:text,
+                        sentAt:
+                            new Date().toISOString()
+                    }
+                });
+
+                if(!adminChatThreads[id]){
+                    adminChatThreads[id] = [];
+                }
+
+                adminChatThreads[id].push({
+                    mine:true,
+                    senderName:"Administrator",
+                    text:text
+                });
+
+            }
+
+        }
+
+
+        /*
+         * ONE INDIVIDUAL USER
+         */
+        else{
+
+            const id =
+                String(openAdminChatThread);
+
+            await chatChannel.send({
+                type:"broadcast",
+                event:"chat",
+                payload:{
+                    roomId:ROOM_ID,
+                    senderId:"ADMIN",
+                    senderName:"Administrator",
+                    recipientId:id,
+                    text:text,
+                    sentAt:
+                        new Date().toISOString()
+                }
+            });
+
+            if(!adminChatThreads[id]){
+                adminChatThreads[id] = [];
+            }
+
+            adminChatThreads[id].push({
+                mine:true,
+                senderName:"Administrator",
+                text:text
+            });
+
+        }
+
+
+        adminChatInput.value = "";
+
+        renderAdminChatRecipients();
+        renderAdminChatMessages();
+
     }
-
-    appendChatMessage(adminChatMessages, true, "Administrator", text);
-    adminChatInput.value = "";
-    renderAdminChatRecipients();
-});
+);
 
 adminChatInput.addEventListener("keydown", function(event){ if(event.key === "Enter"){ event.preventDefault(); adminChatSend.click(); } });
 
