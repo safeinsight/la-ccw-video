@@ -3255,7 +3255,7 @@ async function requestAdministratorMedia(){
             });
 
         administratorMicOn =
-            false;
+            true;
 
         const audioTracks =
             localStream.getAudioTracks();
@@ -3263,11 +3263,13 @@ async function requestAdministratorMedia(){
         audioTracks.forEach(
             track => {
                 track.enabled =
-                    false;
+                    true;
             }
         );
 
         updateAdministratorMicButton();
+
+        updateAdministratorMicStatus();
 
     }catch(error){
 
