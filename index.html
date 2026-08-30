@@ -1986,6 +1986,7 @@ function initializeAdministrator(){
     participantView.style.display = "none";
     administratorToolbar.style.display = "flex";
     participantToolbar.style.display = "none";
+    document.getElementById("app").classList.remove("participantMode");
     adminModeBadge.style.display = "none";
 
     connectionStatus.textContent = "● Administrator";
@@ -2004,6 +2005,7 @@ function initializeParticipant(){
     administratorToolbar.style.display = "none";
     participantToolbar.style.display = "flex";
     adminPanel.style.display = "none";
+    document.getElementById("app").classList.add("participantMode");
 
     joinScreen.classList.remove("hidden");
 
@@ -2482,6 +2484,8 @@ if(!isAdministrator){
     participantView.style.display = "flex";
     participantToolbar.style.display = "flex";
     adminPanel.style.display = "none";
+
+    document.getElementById("app").classList.add("participantMode");
 }
 
     /*
