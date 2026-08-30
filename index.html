@@ -1000,15 +1000,29 @@ input {
 #administratorView { display:block; }
 #participantView {
     display:none;
-    gap:8px;
+
+    width:50%;
+    height:100%;
+
+    min-width:0;
+    min-height:0;
+
     padding:8px;
+
     background:#000;
+
+    box-sizing:border-box;
+
+    flex-direction:column;
+
+    gap:8px;
 }
 
 .participantPanel { position:relative; min-width:0; min-height:0; background:#151515; border:1px solid #333; border-radius:6px; overflow:hidden; display:flex; flex-direction:column; }
 #participantLeft {
-    width:50%;
+    width:100%;
     height:100%;
+
     min-width:0;
     min-height:0;
 
@@ -1040,8 +1054,16 @@ input {
 ========================================================= */
 
 #participantBrowser {
+    position:fixed;
+
+    top:0;
+    right:0;
+    bottom:0;
+
     width:50%;
-    height:100%;
+
+    height:100vh;
+
     min-width:0;
     min-height:0;
 
@@ -1051,14 +1073,70 @@ input {
     background:#151515;
 
     border:1px solid #333;
-    border-radius:6px;
+    border-radius:0;
 
     overflow:hidden;
+
+    box-sizing:border-box;
+
+    z-index:10;
 }
 
+/* =========================================================
+   PARTICIPANT HEADER
+========================================================= */
 
+#app.participantMode #header {
+    position:fixed;
 
+    top:0;
+    left:0;
 
+    width:50%;
+    height:72px;
+
+    z-index:20;
+
+    box-sizing:border-box;
+}
+
+/* =========================================================
+   PARTICIPANT TOOLBAR
+========================================================= */
+
+#app.participantMode #toolbar {
+    position:fixed;
+
+    left:0;
+    bottom:0;
+
+    width:50%;
+    height:64px;
+
+    z-index:20;
+
+    box-sizing:border-box;
+}
+
+/* =========================================================
+   PARTICIPANT CONTENT AREA
+========================================================= */
+
+#app.participantMode #conferenceArea {
+    position:fixed;
+
+    top:72px;
+    left:0;
+    bottom:64px;
+
+    width:50%;
+
+    height:auto;
+
+    min-height:0;
+
+    box-sizing:border-box;
+}
 
 /* =========================================================
    BROWSER FRAME
@@ -1205,49 +1283,107 @@ input {
    PARTICIPANT RESPONSIVE LAYOUT
 ========================================================= */
 
-/* Desktop / landscape */
+/* =========================================================
+   PARTICIPANT RESPONSIVE LAYOUT
+========================================================= */
+
+
+/* =========================================================
+   DESKTOP / LANDSCAPE
+========================================================= */
+
 @media (orientation:landscape), (min-width:901px) {
 
-    #participantView {
-        flex-direction:row;
+    #app.participantMode #participantView {
+        display:flex;
+
+        flex-direction:column;
+
+        width:50%;
+        height:100%;
+    }
+
+    #app.participantMode #participantLeft {
+        width:100%;
+        height:100%;
     }
 
 }
 
 
-/* Portrait mobile */
+/* =========================================================
+   MOBILE / PORTRAIT
+========================================================= */
+
 @media (orientation:portrait) and (max-width:900px) {
 
-    #participantView {
-        flex-direction:column;
+    #app.participantMode #header {
+        width:100%;
+        height:50px;
     }
 
-    #participantLeft {
+    #app.participantMode #toolbar {
+        width:100%;
+        height:58px;
+    }
+
+    #app.participantMode #conferenceArea {
+        top:50px;
+        bottom:58px;
+
+        width:100%;
+    }
+
+    #app.participantMode #participantView {
+        display:flex;
+
+        flex-direction:column;
+
+        width:100%;
+        height:100%;
+
+        padding:4px;
+
+        gap:4px;
+    }
+
+    #app.participantMode #participantLeft {
         width:100%;
         height:66.6667%;
 
         display:flex;
         flex-direction:column;
 
-        gap:8px;
+        gap:4px;
     }
 
-    #participantVideoPanel {
+    #app.participantMode #participantVideoPanel {
         width:100%;
-        height:50%;
+        height:37.5%;
     }
 
-    #participantChatPanel {
+    #app.participantMode #participantChatPanel {
         width:100%;
-        height:50%;
+        height:62.5%;
     }
 
-    #participantBrowser {
+    #app.participantMode #participantBrowser {
+        position:fixed;
+
+        left:0;
+        right:0;
+
+        top:auto;
+        bottom:58px;
+
         width:100%;
         height:33.3333%;
+
+        border-radius:0;
     }
 
 }
+    
 @media (max-width:600px) { .toolbarView { gap:4px; } #adminChatPanel { top:50px; bottom:58px; width:100%; } }
 
 /* =========================================================
