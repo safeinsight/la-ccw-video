@@ -2979,27 +2979,53 @@ async function removeParticipant(id){
     );
 
     /*
- * Immediately remove participant from the
- * administrator's visible control panel.
- *
- * Do NOT remove them from the participants array yet.
- * Supabase will remain the authoritative state.
- */
-const participantControl =
-    document.querySelector(
-        `.participantControl[data-participant-id="${id}"]`
-    );
+     * Immediately remove the participant's
+     * control panel entry from the administrator view.
+     *
+     * IMPORTANT:
+     * Do NOT remove the participant from the
+     * participants array here.
+     */
+    const participantControl =
+        document.querySelector(
+            `.participantControl[data-participant-id="${id}"]`
+        );
 
-if(participantControl){
-    participantControl.remove();
-}
+    if(participantControl){
+
+        participantControl.remove();
+
+    }
 
     /*
-     * First tell the participant that they
-     * have been removed.
-     *
-     * This allows the participant browser
-     * to react immediately.
+     * Immediately clear the participant's
+     * video tile from the administrator view.
+     */
+    document
+        .querySelectorAll(
+            ".videoTile[data-participant-id]"
+        )
+        .forEach(
+            tile => {
+
+                if(
+                    String(
+                        tile.dataset.participantId
+                    ) === String(id)
+                ){
+
+                    clearParticipantTile(
+                        tile
+                    );
+
+                }
+
+            }
+        );
+
+    /*
+     * Tell Supabase that the participant
+     * has been removed.
      */
     const {
         error: updateError
@@ -3037,50 +3063,28 @@ if(participantControl){
     );
 
     /*
-     * Remove immediately from the
-     * administrator's local state.
+     * Do NOT remove the participant from
+     * the participants array here.
+     *
+     * The existing Supabase realtime UPDATE
+     * handler will do that when it receives
+     * status = "removed".
      */
-    participants =
-        participants.filter(
-            p => p.id !== id
-        );
-
-    delete adminChatThreads[String(id)];
-
-adminSelectedChatParticipants.delete(
-    String(id)
-);
-
-if(openAdminChatThread === String(id)){
-    openAdminChatThread = null;
-}
 
     /*
-     * Clear the participant's video tile.
+     * Clean up administrator chat state.
      */
-    document
-        .querySelectorAll(
-            ".videoTile[data-participant-id]"
-        )
-        .forEach(
-            tile => {
+    delete adminChatThreads[String(id)];
 
-                if(
-                    String(
-                        tile.dataset.participantId
-                    ) === String(id)
-                ){
+    adminSelectedChatParticipants.delete(
+        String(id)
+    );
 
-                    clearParticipantTile(
-                        tile
-                    );
+    if(openAdminChatThread === String(id)){
 
-                }
+        openAdminChatThread = null;
 
-            }
-        );
-
-    renderParticipants();
+    }
 
     /*
      * Give the participant browser a moment
@@ -3716,17 +3720,7 @@ function renderParticipants(){
             div.dataset.participantId =
             participant.id;
 
-            document
-    .querySelectorAll(
-        `.videoTile[data-participant-id="${id}"]`
-    )
-    .forEach(
-        tile => {
-            clearParticipantTile(
-                tile
-            );
-        }
-    );
+
 
             div.innerHTML = `
 
