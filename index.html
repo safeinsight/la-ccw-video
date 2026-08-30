@@ -4949,27 +4949,165 @@ participantChatSend.addEventListener("click", async function(){
 participantChatInput.addEventListener("keydown", function(event){ if(event.key === "Enter"){ event.preventDefault(); participantChatSend.click(); } });
 
 
-micButtonParticipant.addEventListener("click", function(){
-    if(!localStream) return;
-    const tracks = localStream.getAudioTracks();
-    if(!tracks.length) return;
-    tracks.forEach(track => track.enabled = !track.enabled);
-    const enabled = tracks[0].enabled;
-    micButtonParticipant.textContent = enabled ? "🎤 Mic ON" : "🔇 Mic OFF";
-    micButtonParticipant.classList.toggle("active", enabled);
-});
+micButtonParticipant.addEventListener(
+    "click",
+    async function(){
 
-cameraButtonParticipant.addEventListener("click", function(){
-    if(!localStream) return;
-    const tracks = localStream.getVideoTracks();
-    if(!tracks.length) return;
-    tracks.forEach(track => track.enabled = !track.enabled);
-    const enabled = tracks[0].enabled;
-    participantLocalVideo.style.display = enabled ? "block" : "none";
-    participantVideoPlaceholder.style.display = enabled ? "none" : "flex";
-    cameraButtonParticipant.textContent = enabled ? "📹 Camera ON" : "📹 Camera OFF";
-    cameraButtonParticipant.classList.toggle("active", enabled);
-});
+        if(!localStream){
+            return;
+        }
+
+        const tracks =
+            localStream.getAudioTracks();
+
+        if(!tracks.length){
+            return;
+        }
+
+        tracks.forEach(
+            track => {
+                track.enabled =
+                    !track.enabled;
+            }
+        );
+
+        const enabled =
+            tracks[0].enabled;
+
+        micButtonParticipant.textContent =
+            enabled
+            ? "🎤 Mic ON"
+            : "🔇 Mic OFF";
+
+        micButtonParticipant.classList.toggle(
+            "active",
+            enabled
+        );
+
+
+        /*
+         * Save microphone state to Supabase
+         * so the administrator sees the
+         * correct status.
+         */
+        if(window.myParticipantId){
+
+            const {
+                error
+            } =
+            await supabaseClient
+                .from(
+                    "conference_participants"
+                )
+                .update({
+                    mic_on:
+                        enabled,
+                    updated_at:
+                        new Date().toISOString()
+                })
+                .eq(
+                    "id",
+                    window.myParticipantId
+                );
+
+            if(error){
+
+                console.error(
+                    "MIC STATUS UPDATE ERROR:",
+                    error
+                );
+
+            }
+
+        }
+
+    }
+);
+
+cameraButtonParticipant.addEventListener(
+    "click",
+    async function(){
+
+        if(!localStream){
+            return;
+        }
+
+        const tracks =
+            localStream.getVideoTracks();
+
+        if(!tracks.length){
+            return;
+        }
+
+        tracks.forEach(
+            track => {
+                track.enabled =
+                    !track.enabled;
+            }
+        );
+
+        const enabled =
+            tracks[0].enabled;
+
+        participantLocalVideo.style.display =
+            enabled
+            ? "block"
+            : "none";
+
+        participantVideoPlaceholder.style.display =
+            enabled
+            ? "none"
+            : "flex";
+
+        cameraButtonParticipant.textContent =
+            enabled
+            ? "📹 Camera ON"
+            : "📹 Camera OFF";
+
+        cameraButtonParticipant.classList.toggle(
+            "active",
+            enabled
+        );
+
+
+        /*
+         * Save camera state to Supabase
+         * so the administrator sees the
+         * correct status.
+         */
+        if(window.myParticipantId){
+
+            const {
+                error
+            } =
+            await supabaseClient
+                .from(
+                    "conference_participants"
+                )
+                .update({
+                    camera_on:
+                        enabled,
+                    updated_at:
+                        new Date().toISOString()
+                })
+                .eq(
+                    "id",
+                    window.myParticipantId
+                );
+
+            if(error){
+
+                console.error(
+                    "CAMERA STATUS UPDATE ERROR:",
+                    error
+                );
+
+            }
+
+        }
+
+    }
+);
 
 leaveButtonParticipant.addEventListener("click", function(){ leaveButton.click(); });
 
