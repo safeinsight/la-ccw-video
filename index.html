@@ -2636,32 +2636,12 @@ function addWaitingParticipantFromDatabase(
 
 }
 
-const locallyRemovedParticipants =
-    window.locallyRemovedParticipants ||
-    new Set();
-
-window.locallyRemovedParticipants =
-    locallyRemovedParticipants;
-
 /* =========================================================
    UPDATE ADMINISTRATOR PARTICIPANT
 ========================================================= */
 
 function updateAdministratorParticipant(participant){
 
-    if(
-    window.locallyRemovedParticipants &&
-    window.locallyRemovedParticipants.has(
-        String(participant.id)
-    )
-){
-    console.log(
-        "Ignoring realtime update for locally removed participant:",
-        participant.id
-    );
-
-    return;
-}
     console.log(
         "Updating administrator participant:",
         participant
@@ -2999,66 +2979,69 @@ async function removeParticipant(id){
     );
 
     /*
-     * =====================================================
-     * REMOVE FROM ADMIN UI FIRST
-     * =====================================================
+     * First tell the participant that they
+     * have been removed.
      *
-     * Do this immediately so the administrator does not
-     * have to wait for Supabase realtime or the database
-     * delete operation.
+     * This allows the participant browser
+     * to react immediately.
      */
-
-    const participantId =
-        String(id);
-
-    window.locallyRemovedParticipants.add(
-    participantId
-);
-
-    /*
-     * Remove from active participant list.
-     */
-
-    participants =
-        participants.filter(
-            p =>
-                String(p.id) !== participantId
+    const {
+        error: updateError
+    } =
+    await supabaseClient
+        .from("conference_participants")
+        .update({
+            status: "removed",
+            updated_at:
+                new Date().toISOString()
+        })
+        .eq(
+            "id",
+            id
         );
 
+    if(updateError){
 
-    /*
-     * Remove from waiting list too, just in case.
-     */
-
-    waitingParticipants =
-        waitingParticipants.filter(
-            p =>
-                String(p.id) !== participantId
+        console.error(
+            "REMOVE PARTICIPANT UPDATE ERROR:",
+            updateError
         );
 
+        alert(
+            "Unable to remove participant.\n\n" +
+            updateError.message
+        );
 
-    /*
-     * Remove any chat state associated with
-     * this participant.
-     */
-
-    delete adminChatThreads[participantId];
-
-    adminSelectedChatParticipants.delete(
-        participantId
-    );
-
-    if(
-        openAdminChatThread === participantId
-    ){
-        openAdminChatThread = null;
+        return;
     }
 
+    console.log(
+        "Participant marked removed:",
+        id
+    );
+
+    /*
+     * Remove immediately from the
+     * administrator's local state.
+     */
+    participants =
+        participants.filter(
+            p => p.id !== id
+        );
+
+    delete adminChatThreads[String(id)];
+
+adminSelectedChatParticipants.delete(
+    String(id)
+);
+
+if(openAdminChatThread === String(id)){
+    openAdminChatThread = null;
+}
 
     /*
      * Clear the participant's video tile.
      */
-
     document
         .querySelectorAll(
             ".videoTile[data-participant-id]"
@@ -3069,7 +3052,7 @@ async function removeParticipant(id){
                 if(
                     String(
                         tile.dataset.participantId
-                    ) === participantId
+                    ) === String(id)
                 ){
 
                     clearParticipantTile(
@@ -3081,84 +3064,13 @@ async function removeParticipant(id){
             }
         );
 
-
-    /*
-     * Rebuild BOTH administrator UI sections
-     * immediately.
-     */
-
-    renderWaitingParticipants();
-
     renderParticipants();
 
-
-    console.log(
-        "Participant removed from administrator UI:",
-        participantId
-    );
-
-
     /*
-     * =====================================================
-     * NOW UPDATE SUPABASE
-     * =====================================================
+     * Give the participant browser a moment
+     * to receive the "removed" realtime event,
+     * then permanently delete the database row.
      */
-
-    const {
-        error: updateError
-    } =
-    await supabaseClient
-        .from(
-            "conference_participants"
-        )
-        .update({
-            status:
-                "removed",
-
-            updated_at:
-                new Date().toISOString()
-        })
-        .eq(
-            "id",
-            id
-        );
-
-
-    if(updateError){
-
-        console.error(
-            "REMOVE PARTICIPANT UPDATE ERROR:",
-            updateError
-        );
-
-        /*
-         * Do NOT put the participant back into the UI.
-         *
-         * The administrator has already removed them
-         * locally. The database error can be handled
-         * separately.
-         */
-
-        return;
-
-    }
-
-
-    console.log(
-        "Participant marked removed in Supabase:",
-        participantId
-    );
-
-
-    /*
-     * =====================================================
-     * DELETE DATABASE RECORD
-     * =====================================================
-     *
-     * Give the participant browser a short opportunity
-     * to receive the "removed" realtime update.
-     */
-
     setTimeout(
         async function(){
 
@@ -3175,7 +3087,6 @@ async function removeParticipant(id){
                     id
                 );
 
-
             if(deleteError){
 
                 console.error(
@@ -3184,13 +3095,11 @@ async function removeParticipant(id){
                 );
 
                 return;
-
             }
-
 
             console.log(
                 "Participant permanently deleted:",
-                participantId
+                id
             );
 
         },
