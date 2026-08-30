@@ -1057,61 +1057,7 @@ input {
 }
 
 
-/* =========================================================
-   BROWSER TABS
-========================================================= */
 
-#browserTabs {
-    flex:0 0 auto;
-
-    display:flex;
-    align-items:center;
-
-    gap:2px;
-
-    height:42px;
-
-    padding:4px;
-
-    background:#000;
-
-    border-bottom:1px solid #333;
-}
-
-.browserTab {
-    height:34px;
-
-    padding:0 14px;
-
-    border:0;
-    border-radius:5px 5px 0 0;
-
-    background:#292929;
-    color:#fff;
-
-    cursor:pointer;
-
-    font-weight:bold;
-}
-
-.browserTab.active {
-    background:#147a14;
-}
-
-.browserTabAdd {
-    width:34px;
-    height:34px;
-
-    border:0;
-    border-radius:5px;
-
-    background:#444;
-    color:#fff;
-
-    font-size:20px;
-
-    cursor:pointer;
-}
 
 
 /* =========================================================
@@ -1998,77 +1944,7 @@ const leaveButtonParticipant = document.getElementById("leaveButtonParticipant")
 const participantBrowserFrame =
     document.getElementById("participantBrowserFrame");
 
-const browserTabs =
-    document.getElementById("browserTabs");
 
-const addBrowserTab =
-    document.getElementById("addBrowserTab");
-
-
-let browserTabCount = 1;
-
-
-addBrowserTab.addEventListener(
-    "click",
-    function(){
-
-        browserTabCount++;
-
-        const tab =
-            document.createElement("button");
-
-        tab.className =
-            "browserTab";
-
-        tab.textContent =
-            "Tab " + browserTabCount;
-
-        tab.dataset.url =
-            "https://safeinsight.acadio.com/auth/signin?go=/dashboard";
-
-
-        document
-            .querySelectorAll(".browserTab")
-            .forEach(
-                existingTab =>
-                    existingTab.classList.remove("active")
-            );
-
-
-        tab.classList.add("active");
-
-
-        browserTabs.insertBefore(
-            tab,
-            addBrowserTab
-        );
-
-
-        participantBrowserFrame.src =
-            tab.dataset.url;
-
-
-        tab.addEventListener(
-            "click",
-            function(){
-
-                document
-                    .querySelectorAll(".browserTab")
-                    .forEach(
-                        existingTab =>
-                            existingTab.classList.remove("active")
-                    );
-
-                tab.classList.add("active");
-
-                participantBrowserFrame.src =
-                    tab.dataset.url;
-
-            }
-        );
-
-    }
-);
 
 function updateAdminCameraButton(text){
 
