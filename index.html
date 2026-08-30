@@ -2979,6 +2979,22 @@ async function removeParticipant(id){
     );
 
     /*
+ * Immediately remove participant from the
+ * administrator's visible control panel.
+ *
+ * Do NOT remove them from the participants array yet.
+ * Supabase will remain the authoritative state.
+ */
+const participantControl =
+    document.querySelector(
+        `.participantControl[data-participant-id="${id}"]`
+    );
+
+if(participantControl){
+    participantControl.remove();
+}
+
+    /*
      * First tell the participant that they
      * have been removed.
      *
@@ -3695,7 +3711,10 @@ function renderParticipants(){
                 );
 
             div.className =
-                "participantControl";
+            "participantControl";
+
+            div.dataset.participantId =
+            participant.id;
 
 
             div.innerHTML = `
