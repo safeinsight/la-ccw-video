@@ -2653,9 +2653,9 @@ function updateAdministratorParticipant(participant){
     */
 
     const index =
-        participants.findIndex(
-            p => p.id === participant.id
-        );
+    participants.findIndex(
+        p => String(p.id) === String(participant.id)
+    );
 
 
     /*
@@ -3024,10 +3024,10 @@ async function removeParticipant(id){
      * Remove immediately from the
      * administrator's local state.
      */
-    participants =
-        participants.filter(
-            p => p.id !== id
-        );
+   participants =
+    participants.filter(
+        p => String(p.id) !== String(id)
+    );
 
     delete adminChatThreads[String(id)];
 
