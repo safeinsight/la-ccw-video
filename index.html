@@ -998,14 +998,146 @@ input {
 
 #administratorView, #participantView { width:100%; height:100%; min-width:0; min-height:0; }
 #administratorView { display:block; }
-#participantView { display:none; gap:8px; padding:8px; background:#000; }
+#participantView {
+    display:none;
+    gap:8px;
+    padding:8px;
+    background:#000;
+}
 
 .participantPanel { position:relative; min-width:0; min-height:0; background:#151515; border:1px solid #333; border-radius:6px; overflow:hidden; display:flex; flex-direction:column; }
-#participantVideoPanel, #participantChatPanel { flex:1; }
+#participantLeft {
+    width:50%;
+    height:100%;
+    min-width:0;
+    min-height:0;
+
+    display:flex;
+    flex-direction:column;
+
+    gap:8px;
+}
+
+#participantVideoPanel {
+    width:100%;
+    height:50%;
+    min-height:0;
+}
+
+#participantChatPanel {
+    width:100%;
+    height:50%;
+    min-height:0;
+}
+
+
 .participantPanelTitle { flex:0 0 auto; padding:9px 12px; background:#000; border-bottom:1px solid #333; font-weight:bold; }
 #participantLocalVideo { width:100%; height:100%; min-height:0; object-fit:contain; background:#111; }
 #participantVideoPlaceholder { position:absolute; inset:42px 0 0 0; display:none; align-items:center; justify-content:center; color:#aaa; background:#111; }
 
+/* =========================================================
+   PARTICIPANT BROWSER
+========================================================= */
+
+#participantBrowser {
+    width:50%;
+    height:100%;
+    min-width:0;
+    min-height:0;
+
+    display:flex;
+    flex-direction:column;
+
+    background:#151515;
+
+    border:1px solid #333;
+    border-radius:6px;
+
+    overflow:hidden;
+}
+
+
+/* =========================================================
+   BROWSER TABS
+========================================================= */
+
+#browserTabs {
+    flex:0 0 auto;
+
+    display:flex;
+    align-items:center;
+
+    gap:2px;
+
+    height:42px;
+
+    padding:4px;
+
+    background:#000;
+
+    border-bottom:1px solid #333;
+}
+
+.browserTab {
+    height:34px;
+
+    padding:0 14px;
+
+    border:0;
+    border-radius:5px 5px 0 0;
+
+    background:#292929;
+    color:#fff;
+
+    cursor:pointer;
+
+    font-weight:bold;
+}
+
+.browserTab.active {
+    background:#147a14;
+}
+
+.browserTabAdd {
+    width:34px;
+    height:34px;
+
+    border:0;
+    border-radius:5px;
+
+    background:#444;
+    color:#fff;
+
+    font-size:20px;
+
+    cursor:pointer;
+}
+
+
+/* =========================================================
+   BROWSER FRAME
+========================================================= */
+
+#browserFrameContainer {
+    flex:1;
+
+    min-width:0;
+    min-height:0;
+
+    background:#fff;
+}
+
+#participantBrowserFrame {
+    width:100%;
+    height:100%;
+
+    border:0;
+
+    display:block;
+
+    background:#fff;
+}
+    
 .toolbarView { display:none; width:100%; align-items:center; justify-content:center; gap:10px; }
 #administratorToolbar { display:none; }
 
@@ -1123,8 +1255,53 @@ input {
 .chatComposer input { flex:1; min-width:0; padding:9px; border:1px solid #555; border-radius:5px; background:#222; color:#fff; }
 .chatSendButton { border:0; border-radius:5px; padding:9px 13px; background:#168016; color:#fff; font-weight:bold; cursor:pointer; }
 
-@media (orientation:portrait) and (max-width:900px) { #participantView { flex-direction:column; } }
-@media (orientation:landscape), (min-width:901px) { #participantView { flex-direction:row; } }
+/* =========================================================
+   PARTICIPANT RESPONSIVE LAYOUT
+========================================================= */
+
+/* Desktop / landscape */
+@media (orientation:landscape), (min-width:901px) {
+
+    #participantView {
+        flex-direction:row;
+    }
+
+}
+
+
+/* Portrait mobile */
+@media (orientation:portrait) and (max-width:900px) {
+
+    #participantView {
+        flex-direction:column;
+    }
+
+    #participantLeft {
+        width:100%;
+        height:66.6667%;
+
+        display:flex;
+        flex-direction:column;
+
+        gap:8px;
+    }
+
+    #participantVideoPanel {
+        width:100%;
+        height:50%;
+    }
+
+    #participantChatPanel {
+        width:100%;
+        height:50%;
+    }
+
+    #participantBrowser {
+        width:100%;
+        height:33.3333%;
+    }
+
+}
 @media (max-width:600px) { .toolbarView { gap:4px; } #adminChatPanel { top:50px; bottom:58px; width:100%; } }
 
 /* =========================================================
@@ -1427,20 +1604,66 @@ input {
 
         <section id="participantView">
 
-            <div id="participantVideoPanel" class="participantPanel">
-                <div class="participantPanelTitle">Your Video</div>
-                <video id="participantLocalVideo" autoplay playsinline muted></video>
-                <div id="participantVideoPlaceholder">Camera Off</div>
-            </div>
+<div id="participantLeft">
 
-            <div id="participantChatPanel" class="participantPanel">
-                <div class="participantPanelTitle">Chat with Instructor</div>
-                <div id="participantChatMessages" class="chatMessages"></div>
-                <div class="chatComposer">
-                    <input id="participantChatInput" type="text" maxlength="500" placeholder="Type a message...">
-                    <button id="participantChatSend" class="chatSendButton">Send</button>
-                </div>
-            </div>
+    <div id="participantVideoPanel" class="participantPanel">
+        <div class="participantPanelTitle">Your Video</div>
+        <video id="participantLocalVideo" autoplay playsinline muted></video>
+        <div id="participantVideoPlaceholder">Camera Off</div>
+    </div>
+
+    <div id="participantChatPanel" class="participantPanel">
+        <div class="participantPanelTitle">Chat with Instructor</div>
+        <div id="participantChatMessages" class="chatMessages"></div>
+
+        <div class="chatComposer">
+            <input
+                id="participantChatInput"
+                type="text"
+                maxlength="500"
+                placeholder="Type a message..."
+            >
+
+            <button
+                id="participantChatSend"
+                class="chatSendButton"
+            >
+                Send
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<div id="participantBrowser">
+
+    <div id="browserTabs">
+        <button
+            class="browserTab active"
+            data-url="https://safeinsight.acadio.com/auth/signin?go=/dashboard"
+        >
+            Training
+        </button>
+
+        <button
+            id="addBrowserTab"
+            class="browserTabAdd"
+            type="button"
+        >
+            +
+        </button>
+    </div>
+
+    <div id="browserFrameContainer">
+        <iframe
+            id="participantBrowserFrame"
+            src="https://safeinsight.acadio.com/auth/signin?go=/dashboard"
+            title="Training Browser"
+            allow="camera; microphone; fullscreen"
+        ></iframe>
+    </div>
+
+</div>
 
         </section>
 
@@ -1787,6 +2010,81 @@ const micButtonParticipant = document.getElementById("micButtonParticipant");
 const cameraButtonParticipant = document.getElementById("cameraButtonParticipant");
 const leaveButtonParticipant = document.getElementById("leaveButtonParticipant");
 
+const participantBrowserFrame =
+    document.getElementById("participantBrowserFrame");
+
+const browserTabs =
+    document.getElementById("browserTabs");
+
+const addBrowserTab =
+    document.getElementById("addBrowserTab");
+
+
+let browserTabCount = 1;
+
+
+addBrowserTab.addEventListener(
+    "click",
+    function(){
+
+        browserTabCount++;
+
+        const tab =
+            document.createElement("button");
+
+        tab.className =
+            "browserTab";
+
+        tab.textContent =
+            "Tab " + browserTabCount;
+
+        tab.dataset.url =
+            "https://safeinsight.acadio.com/auth/signin?go=/dashboard";
+
+
+        document
+            .querySelectorAll(".browserTab")
+            .forEach(
+                existingTab =>
+                    existingTab.classList.remove("active")
+            );
+
+
+        tab.classList.add("active");
+
+
+        browserTabs.insertBefore(
+            tab,
+            addBrowserTab
+        );
+
+
+        participantBrowserFrame.src =
+            tab.dataset.url;
+
+
+        tab.addEventListener(
+            "click",
+            function(){
+
+                document
+                    .querySelectorAll(".browserTab")
+                    .forEach(
+                        existingTab =>
+                            existingTab.classList.remove("active")
+                    );
+
+                tab.classList.add("active");
+
+                participantBrowserFrame.src =
+                    tab.dataset.url;
+
+            }
+        );
+
+    }
+);
+
 function updateAdminCameraButton(text){
 
     adminCameraButton.textContent = text;
@@ -1844,6 +2142,7 @@ function initializeParticipant(){
     participantView.style.display = "none";
     administratorToolbar.style.display = "none";
     participantToolbar.style.display = "flex";
+    adminPanel.style.display = "none";
 
     joinScreen.classList.remove("hidden");
 
@@ -2317,11 +2616,12 @@ function enterConference(participant){
         conferenceArea.style.display = "flex";
     }
 
-    if(!isAdministrator){
-        administratorView.style.display = "none";
-        participantView.style.display = "flex";
-        participantToolbar.style.display = "flex";
-    }
+if(!isAdministrator){
+    administratorView.style.display = "none";
+    participantView.style.display = "flex";
+    participantToolbar.style.display = "flex";
+    adminPanel.style.display = "none";
+}
 
     /*
      * Make sure our local participant
