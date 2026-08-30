@@ -2536,7 +2536,7 @@ function subscribeToConference(){
                  */
                 participants =
                     participants.filter(
-                        p => String(p.id) !== String(deletedId)
+                        p => p.id !== deletedId
                     );
 
 
@@ -2649,6 +2649,19 @@ window.locallyRemovedParticipants =
 
 function updateAdministratorParticipant(participant){
 
+    if(
+    window.locallyRemovedParticipants &&
+    window.locallyRemovedParticipants.has(
+        String(participant.id)
+    )
+){
+    console.log(
+        "Ignoring realtime update for locally removed participant:",
+        participant.id
+    );
+
+    return;
+}
     console.log(
         "Updating administrator participant:",
         participant
@@ -2660,9 +2673,9 @@ function updateAdministratorParticipant(participant){
     */
 
     const index =
-    participants.findIndex(
-        p => String(p.id) === String(participant.id)
-    );
+        participants.findIndex(
+            p => p.id === participant.id
+        );
 
 
     /*
@@ -2998,6 +3011,9 @@ async function removeParticipant(id){
     const participantId =
         String(id);
 
+    window.locallyRemovedParticipants.add(
+    participantId
+);
 
     /*
      * Remove from active participant list.
