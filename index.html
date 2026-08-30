@@ -2979,19 +2979,51 @@ async function removeParticipant(id){
     );
 
     /*
-     * OPTIMISTIC LOCAL REMOVAL
+     * First tell the participant that they
+     * have been removed.
      *
-     * Remove the participant from the administrator
-     * interface immediately. Do NOT wait for Supabase.
-     *
-     * Supabase remains the authoritative database and
-     * will confirm the removal asynchronously below.
+     * This allows the participant browser
+     * to react immediately.
      */
-    const removedParticipant =
-        participants.find(
-            p => p.id === id
+    const {
+        error: updateError
+    } =
+    await supabaseClient
+        .from("conference_participants")
+        .update({
+            status: "removed",
+            updated_at:
+                new Date().toISOString()
+        })
+        .eq(
+            "id",
+            id
         );
 
+    if(updateError){
+
+        console.error(
+            "REMOVE PARTICIPANT UPDATE ERROR:",
+            updateError
+        );
+
+        alert(
+            "Unable to remove participant.\n\n" +
+            updateError.message
+        );
+
+        return;
+    }
+
+    console.log(
+        "Participant marked removed:",
+        id
+    );
+
+    /*
+     * Remove immediately from the
+     * administrator's local state.
+     */
     participants =
         participants.filter(
             p => p.id !== id
@@ -2999,16 +3031,16 @@ async function removeParticipant(id){
 
     delete adminChatThreads[String(id)];
 
-    adminSelectedChatParticipants.delete(
-        String(id)
-    );
+adminSelectedChatParticipants.delete(
+    String(id)
+);
 
-    if(openAdminChatThread === String(id)){
-        openAdminChatThread = null;
-    }
+if(openAdminChatThread === String(id)){
+    openAdminChatThread = null;
+}
 
     /*
-     * Clear the participant's video tile immediately.
+     * Clear the participant's video tile.
      */
     document
         .querySelectorAll(
@@ -3032,79 +3064,7 @@ async function removeParticipant(id){
             }
         );
 
-    /*
-     * Refresh the administrator control panel immediately.
-     */
     renderParticipants();
-
-    console.log(
-        "Participant removed from administrator view immediately:",
-        id
-    );
-
-    /*
-     * Now update Supabase in the background.
-     */
-    const {
-        error: updateError
-    } =
-    await supabaseClient
-        .from("conference_participants")
-        .update({
-            status: "removed",
-            updated_at:
-                new Date().toISOString()
-        })
-        .eq(
-            "id",
-            id
-        );
-
-    /*
-     * If Supabase fails, restore the local participant
-     * so the administrator interface does not disagree
-     * permanently with the database.
-     */
-    if(updateError){
-
-        console.error(
-            "REMOVE PARTICIPANT UPDATE ERROR:",
-            updateError
-        );
-
-        if(
-            removedParticipant &&
-            !participants.some(
-                p => p.id === id
-            )
-        ){
-
-            participants.push(
-                removedParticipant
-            );
-
-            renderParticipants();
-
-            assignParticipantToTile(
-                removedParticipant
-            );
-
-        }
-
-        alert(
-            "Unable to remove participant.
-
-" +
-            updateError.message
-        );
-
-        return;
-    }
-
-    console.log(
-        "Participant marked removed in Supabase:",
-        id
-    );
 
     /*
      * Give the participant browser a moment
