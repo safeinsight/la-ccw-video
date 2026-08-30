@@ -2536,7 +2536,7 @@ function subscribeToConference(){
                  */
                 participants =
                     participants.filter(
-                        p => p.id !== deletedId
+                        p => String(p.id) !== String(deletedId)
                     );
 
 
