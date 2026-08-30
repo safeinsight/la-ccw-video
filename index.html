@@ -3716,6 +3716,17 @@ function renderParticipants(){
             div.dataset.participantId =
             participant.id;
 
+            document
+    .querySelectorAll(
+        `.videoTile[data-participant-id="${id}"]`
+    )
+    .forEach(
+        tile => {
+            clearParticipantTile(
+                tile
+            );
+        }
+    );
 
             div.innerHTML = `
 
