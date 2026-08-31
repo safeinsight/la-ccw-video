@@ -2751,10 +2751,10 @@ function subscribeToConference(){
 
 
         /*
-         * Participant has left.
+         * Detect a participant leaving.
          *
-         * Clean up the administrator interface
-         * FIRST.
+         * Only trigger this when the status
+         * actually changes INTO "left".
          */
 
         if(
@@ -2763,44 +2763,33 @@ function subscribeToConference(){
         ){
 
             console.log(
-                "PARTICIPANT LEFT - CLEANING UP ADMIN VIEW:",
+                "PARTICIPANT LEFT:",
                 payload.new
             );
 
 
             /*
-             * Remove participant from:
-             * - administrator control panel
-             * - participants array
-             * - video grid
-             */
-
-            updateAdministratorParticipant(
-                payload.new
-            );
-
-
-            /*
-             * NOW notify the administrator.
+             * Play administrator notification sound.
              */
 
             playParticipantLeftNotification();
 
+
+            /*
+             * Alert administrator.
+             */
 
             alert(
                 payload.new.participant_name +
                 " has left the conference."
             );
 
-
-            return;
-
         }
 
 
         /*
-         * All other participant updates continue
-         * through the normal update function.
+         * Continue with the normal participant
+         * update processing.
          */
 
         updateAdministratorParticipant(
@@ -2969,11 +2958,6 @@ function updateAdministratorParticipant(participant){
         participant
     );
 
-    console.log(
-    "ADMIN LEFT STATUS CHECK:",
-    participant.id,
-    participant.status
-);
 
     /*
        Find participant in active list.
@@ -3007,7 +2991,7 @@ if(
 
     delete adminChatThreads[String(participant.id)];
 
-adminChatSelectedParticipants.delete(
+adminSelectedChatParticipants.delete(
     String(participant.id)
 );
 
@@ -3049,52 +3033,54 @@ if(openAdminChatThread === String(participant.id)){
      */
     renderParticipants();
 
-/*
- * If participant left voluntarily,
- * permanently delete their database row.
- */
-if(
-    participant.status === "left"
-){
 
-    console.log(
-        "Participant left voluntarily. Deleting database record:",
-        participant.id
-    );
+    /*
+     * If participant left voluntarily,
+     * permanently delete their database row.
+     */
+    if(
+        participant.status === "left"
+    ){
 
-
-    supabaseClient
-        .from(
-            "conference_participants"
-        )
-        .delete()
-        .eq(
-            "id",
+        console.log(
+            "Participant left voluntarily. Deleting database record:",
             participant.id
-        )
-        .then(
-            function(result){
-
-                if(result.error){
-
-                    console.error(
-                        "DELETE LEFT PARTICIPANT ERROR:",
-                        result.error
-                    );
-
-                    return;
-                }
-
-
-                console.log(
-                    "LEFT PARTICIPANT DELETED FROM SUPABASE:",
-                    participant.id
-                );
-
-            }
         );
 
-}
+
+        supabaseClient
+            .from(
+                "conference_participants"
+            )
+            .delete()
+            .eq(
+                "id",
+                participant.id
+            )
+            .then(
+                function(result){
+
+                    if(result.error){
+
+                        console.error(
+                            "DELETE LEFT PARTICIPANT ERROR:",
+                            result.error
+                        );
+
+                        return;
+
+                    }
+
+
+                    console.log(
+                        "LEFT PARTICIPANT DELETED FROM SUPABASE:",
+                        participant.id
+                    );
+
+                }
+            );
+
+    }
 
 
     return;
@@ -3401,7 +3387,7 @@ async function removeParticipant(id){
      */
     delete adminChatThreads[String(id)];
 
-    adminChatSelectedParticipants.delete(
+    adminSelectedChatParticipants.delete(
         String(id)
     );
 
