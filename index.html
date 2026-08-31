@@ -1022,6 +1022,64 @@ input {
     width:100%;
     height:50%;
     min-height:0;
+    position:relative;
+    overflow:hidden;
+}
+
+#participantVideoStage {
+    position:relative;
+    width:100%;
+    height:100%;
+    min-width:0;
+    min-height:0;
+}
+
+#participantLocalVideo {
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%, -50%);
+    width:58%;
+    height:78%;
+    min-height:0;
+    object-fit:contain;
+    background:#111;
+    z-index:1;
+}
+
+#participantVideoControls {
+    position:absolute;
+    inset:0;
+    z-index:5;
+    pointer-events:none;
+}
+
+#participantVideoControls .toolbarButton {
+    position:absolute;
+    min-width:96px;
+    padding:9px 10px;
+    font-size:13px;
+    pointer-events:auto;
+}
+
+#micButtonParticipant {
+    left:10px;
+    top:10px;
+}
+
+#cameraButtonParticipant {
+    left:10px;
+    bottom:10px;
+}
+
+#scheduleButtonParticipant {
+    right:10px;
+    top:10px;
+}
+
+#leaveButtonParticipant {
+    right:10px;
+    bottom:10px;
 }
 
 #participantChatPanel {
@@ -1037,8 +1095,7 @@ input {
 
 
 .participantPanelTitle { flex:0 0 auto; padding:9px 12px; background:#000; border-bottom:1px solid #333; font-weight:bold; }
-#participantLocalVideo { width:100%; height:100%; min-height:0; object-fit:contain; background:#111; }
-#participantVideoPlaceholder { position:absolute; inset:42px 0 0 0; display:none; align-items:center; justify-content:center; color:#aaa; background:#111; }
+#participantVideoPlaceholder { position:absolute; inset:0; display:none; align-items:center; justify-content:center; color:#aaa; background:#111; z-index:2; }
 
 /* =========================================================
    PARTICIPANT BROWSER
@@ -1223,6 +1280,24 @@ input {
 /* Portrait mobile */
 @media (orientation:portrait) and (max-width:900px) {
 
+    #participantVideoPanel {
+        height:60%;
+    }
+
+    #participantChatPanel {
+        height:40%;
+    }
+
+    #participantLocalVideo {
+        width:52%;
+        height:76%;
+    }
+
+    #participantVideoControls .toolbarButton {
+        min-width:78px;
+        padding:8px 6px;
+        font-size:11px;
+    }
 
     #participantView {
         display:flex;
@@ -1253,7 +1328,7 @@ input {
 
     #participantVideoPanel {
         width:100%;
-        height:50%;
+        height:60%;
 
         min-height:0;
 
@@ -1262,7 +1337,7 @@ input {
 
     #participantChatPanel {
         width:100%;
-        height:50%;
+        height:40%;
 
         min-height:0;
 
@@ -1593,8 +1668,17 @@ input {
 <div id="participantLeft">
 
     <div id="participantVideoPanel" class="participantPanel">
-        <video id="participantLocalVideo" autoplay playsinline muted></video>
-        <div id="participantVideoPlaceholder">Camera Off</div>
+        <div id="participantVideoStage">
+            <video id="participantLocalVideo" autoplay playsinline muted></video>
+            <div id="participantVideoPlaceholder">Camera Off</div>
+
+            <div id="participantVideoControls">
+                <button class="toolbarButton" id="micButtonParticipant">🎤 Mic</button>
+                <button class="toolbarButton" id="cameraButtonParticipant">📹 Camera ON</button>
+                <button type="button" class="toolbarButton redButton" id="scheduleButtonParticipant" onclick="window.open('https://app.acuityscheduling.com/schedule/0fd3042a/appointment/56783178/calendar/14314778?appointmentTypeIds[]=56783178','_blank')">📅 Schedule</button>
+                <button class="toolbarButton redButton" id="leaveButtonParticipant">EXIT ROOM</button>
+            </div>
+        </div>
     </div>
 
     <div id="participantChatPanel" class="participantPanel">
@@ -1652,14 +1736,6 @@ input {
             <button class="toolbarButton redButton" id="leaveButton">EXIT ROOM</button>
             <button class="toolbarButton" id="micButton" style="background-color:#777;">🔇 Mic OFF</button>
             <button class="toolbarButton redButton" id="adminPanelButton">Participants</button>
-        </div>
-
-        <div id="participantToolbar" class="toolbarView">
-            <button type="button" class="toolbarButton redButton" onclick="window.open('https://safeinsight.acadio.com/auth/signin?go=/dashboard','_blank')">🎯 Training</button>
-            <button class="toolbarButton" id="micButtonParticipant">🎤 Mic</button>
-            <button class="toolbarButton redButton" id="leaveButtonParticipant">EXIT ROOM</button>
-            <button class="toolbarButton" id="cameraButtonParticipant">📹 Camera ON</button>
-            <button type="button" class="toolbarButton redButton" onclick="window.open('https://app.acuityscheduling.com/schedule/0fd3042a/appointment/56783178/calendar/14314778?appointmentTypeIds[]=56783178','_blank')">📅 Schedule</button>
         </div>
 
     </footer>
@@ -1962,7 +2038,7 @@ const noParticipants =
 const administratorView = document.getElementById("administratorView");
 const participantView = document.getElementById("participantView");
 const administratorToolbar = document.getElementById("administratorToolbar");
-const participantToolbar = document.getElementById("participantToolbar");
+const toolbar = document.getElementById("toolbar");
 const participantLocalVideo = document.getElementById("participantLocalVideo");
 const participantVideoPlaceholder = document.getElementById("participantVideoPlaceholder");
 const adminChatButton = document.getElementById("adminChatButton");
@@ -2023,8 +2099,8 @@ function initializeAdministrator(){
     joinScreen.classList.add("hidden");
     administratorView.style.display = "block";
     participantView.style.display = "none";
+    toolbar.style.display = "flex";
     administratorToolbar.style.display = "flex";
-    participantToolbar.style.display = "none";
     adminModeBadge.style.display = "none";
 
     connectionStatus.textContent = "● Administrator";
@@ -2040,8 +2116,8 @@ function initializeParticipant(){
 
     administratorView.style.display = "none";
     participantView.style.display = "none";
+    toolbar.style.display = "none";
     administratorToolbar.style.display = "none";
-    participantToolbar.style.display = "flex";
     adminPanel.style.display = "none";
 
     joinScreen.classList.remove("hidden");
@@ -2519,7 +2595,7 @@ function enterConference(participant){
 if(!isAdministrator){
     administratorView.style.display = "none";
     participantView.style.display = "flex";
-    participantToolbar.style.display = "flex";
+    toolbar.style.display = "none";
     adminPanel.style.display = "none";
 }
 
