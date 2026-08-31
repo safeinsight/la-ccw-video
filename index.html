@@ -1223,6 +1223,10 @@ input {
 /* Portrait mobile */
 @media (orientation:portrait) and (max-width:900px) {
 
+    #app.participantMode .participantPanelTitle {
+    display:none;
+}
+
     #participantView {
         display:flex;
         flex-direction:column;
@@ -1592,7 +1596,6 @@ input {
 <div id="participantLeft">
 
     <div id="participantVideoPanel" class="participantPanel">
-        <div class="participantPanelTitle">Your Video</div>
         <video id="participantLocalVideo" autoplay playsinline muted></video>
         <div id="participantVideoPlaceholder">Camera Off</div>
     </div>
