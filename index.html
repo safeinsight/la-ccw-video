@@ -5522,11 +5522,11 @@ if(chatTile){
             appendChatMessage(adminChatMessages, false, message.senderName || "Participant", message.text);
             renderAdminChatRecipients();
         }
-            }else{
-                if(message.recipientId === window.myParticipantId){
-                    appendChatMessage(participantChatMessages, message.senderId === window.myParticipantId, message.senderName || "Administrator", message.text);
-                }
-            }
+}else{
+    if(message.recipientId === window.myParticipantId){
+        appendChatMessage(participantChatMessages, message.senderId === window.myParticipantId, message.senderName || "Administrator", message.text);
+    }
+}
         })
         .subscribe(function(status){ console.log("Chat channel:", status); });
 }
