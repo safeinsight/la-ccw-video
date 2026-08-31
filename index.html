@@ -1402,6 +1402,129 @@ input {
 
 }
 
+
+/* =========================================================
+   CUSTOM ALERT / CONFIRM MODALS
+========================================================= */
+
+#customAlertOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(0,0,0,.72);
+}
+
+#customAlertOverlay.show {
+    display: flex;
+}
+
+.customAlertBox {
+    width: min(92vw, 760px);
+    min-height: 360px;
+    padding: 34px 42px 30px;
+    background: #e6e6e6;
+    color: #000;
+    border: 6px solid #ed1c24;
+    border-radius: 64px;
+    box-shadow: 0 18px 60px rgba(0,0,0,.55);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+}
+
+.customAlertLogo {
+    width: min(300px, 55%);
+    max-height: 100px;
+    object-fit: contain;
+    margin: 0 auto 18px;
+}
+
+#customAlertMessage {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 12px 24px;
+    font-size: clamp(22px, 3vw, 42px);
+    line-height: 1.2;
+    font-weight: bold;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.customAlertButtons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+}
+
+.customAlertButton {
+    min-width: 120px;
+    padding: 11px 24px;
+    border: 0;
+    border-radius: 7px;
+    background: #000;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.customAlertButton:hover {
+    background: #555;
+}
+
+.customAlertButton.confirm {
+    background: #168016;
+}
+
+.customAlertButton.cancel {
+    background: #8b0000;
+}
+
+@media (max-width: 600px) {
+    #customAlertOverlay {
+        padding: 14px;
+    }
+
+    .customAlertBox {
+        min-height: 280px;
+        padding: 25px 20px 22px;
+        border-width: 5px;
+        border-radius: 42px;
+    }
+
+    .customAlertLogo {
+        width: min(220px, 70%);
+        max-height: 72px;
+        margin-bottom: 8px;
+    }
+
+    #customAlertMessage {
+        padding: 8px 4px 18px;
+        font-size: clamp(19px, 6vw, 30px);
+    }
+
+    .customAlertButtons {
+        gap: 8px;
+    }
+
+    .customAlertButton {
+        min-width: 100px;
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+}
+
 /* =========================================================
    HIDDEN
 ========================================================= */
@@ -1893,6 +2016,46 @@ input {
 
 </aside>
 
+
+<!-- =======================================================
+     CUSTOM ALERT / CONFIRM
+======================================================== -->
+<div id="customAlertOverlay" aria-hidden="true">
+    <div
+        id="customAlertBox"
+        class="customAlertBox"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="customAlertMessage"
+    >
+        <img
+            src="safe-insight-logo.png"
+            class="customAlertLogo"
+            alt="Safe Insight"
+        >
+
+        <div id="customAlertMessage"></div>
+
+        <div class="customAlertButtons">
+            <button
+                type="button"
+                id="customAlertCancel"
+                class="customAlertButton cancel"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                id="customAlertOk"
+                class="customAlertButton"
+            >
+                OK
+            </button>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -2056,8 +2219,228 @@ const micButtonParticipant = document.getElementById("micButtonParticipant");
 const cameraButtonParticipant = document.getElementById("cameraButtonParticipant");
 const leaveButtonParticipant = document.getElementById("leaveButtonParticipant");
 
+
 const participantBrowserFrame =
     document.getElementById("participantBrowserFrame");
+
+/* =========================================================
+   CUSTOM ALERT / CONFIRM REFERENCES
+========================================================= */
+
+const customAlertOverlay =
+    document.getElementById("customAlertOverlay");
+
+const customAlertMessage =
+    document.getElementById("customAlertMessage");
+
+const customAlertOk =
+    document.getElementById("customAlertOk");
+
+const customAlertCancel =
+    document.getElementById("customAlertCancel");
+
+/*
+ * EDIT THESE MESSAGES TO CHANGE WHAT USERS SEE.
+ *
+ * Dynamic messages (participant names and database errors)
+ * are functions so the changing information can be included.
+ */
+const CUSTOM_ALERT_MESSAGES = {
+
+    missingName:
+        "Please enter your FULL NAME.",
+
+    conferenceUnavailable:
+        "Unable to contact the conference room.",
+
+    removed:
+        "The administrator has removed you from the conference.",
+
+    denied:
+        "The administrator did not allow entry to the conference.",
+
+    participantLeft:
+        name => name + " has left the conference.",
+
+    allowError:
+        error => "Unable to allow participant.\n\n" + error.message,
+
+    removeError:
+        error => "Unable to remove participant.\n\n" + error.message,
+
+    administratorCamera:
+        "Unable to access the administrator camera.",
+
+    administratorMicrophone:
+        "Microphone permission was not granted.",
+
+    denyError:
+        error => "Unable to deny participant.\n\n" + error.message,
+
+    conferenceFull:
+        "The conference is full. Maximum 8 participants plus the administrator.",
+
+    sessionNotFound:
+        "Unable to identify your conference session.",
+
+    leaveError:
+        error => "Unable to leave the conference.\n\n" + error.message,
+
+    leaveConfirm:
+        "Leave this conference?"
+};
+
+/* =========================================================
+   CUSTOM ALERT / CONFIRM FUNCTIONS
+========================================================= */
+
+function showCustomAlert(message){
+
+    customAlertMessage.textContent =
+        message;
+
+    customAlertCancel.style.display =
+        "none";
+
+    customAlertOk.textContent =
+        "OK";
+
+    customAlertOverlay.classList.add(
+        "show"
+    );
+
+    customAlertOverlay.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+    customAlertOk.focus();
+}
+
+function showCustomConfirm(message){
+
+    return new Promise(
+        function(resolve){
+
+            customAlertMessage.textContent =
+                message;
+
+            customAlertCancel.style.display =
+                "inline-block";
+
+            customAlertOk.textContent =
+                "Continue";
+
+            customAlertOverlay.classList.add(
+                "show"
+            );
+
+            customAlertOverlay.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+
+            function finish(result){
+
+                customAlertOverlay.classList.remove(
+                    "show"
+                );
+
+                customAlertOverlay.setAttribute(
+                    "aria-hidden",
+                    "true"
+                );
+
+                customAlertCancel.style.display =
+                    "none";
+
+                customAlertOk.textContent =
+                    "OK";
+
+                customAlertOk.removeEventListener(
+                    "click",
+                    onConfirm
+                );
+
+                customAlertCancel.removeEventListener(
+                    "click",
+                    onCancel
+                );
+
+                resolve(result);
+            }
+
+            function onConfirm(){
+                finish(true);
+            }
+
+            function onCancel(){
+                finish(false);
+            }
+
+            customAlertOk.addEventListener(
+                "click",
+                onConfirm
+            );
+
+            customAlertCancel.addEventListener(
+                "click",
+                onCancel
+            );
+
+            customAlertOk.focus();
+        }
+    );
+}
+
+/*
+ * Normal alerts close with OK.
+ * Confirmations are handled by their own listeners above.
+ */
+customAlertOk.addEventListener(
+    "click",
+    function(){
+
+        if(
+            customAlertCancel.style.display ===
+            "none"
+        ){
+
+            customAlertOverlay.classList.remove(
+                "show"
+            );
+
+            customAlertOverlay.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+        }
+
+    }
+);
+
+/*
+ * Clicking the dark area does NOT dismiss the modal.
+ * This keeps the behavior similar to a browser alert.
+ *
+ * Escape cancels a confirmation but does not dismiss
+ * a normal alert.
+ */
+document.addEventListener(
+    "keydown",
+    function(event){
+
+        if(
+            event.key === "Escape" &&
+            customAlertOverlay.classList.contains("show") &&
+            customAlertCancel.style.display !== "none"
+        ){
+
+            customAlertCancel.click();
+        }
+
+    }
+);
 
 
 
@@ -2138,8 +2521,8 @@ knockButton.addEventListener(
 
         if(!name){
 
-            alert(
-                "Please enter your FULL NAME."
+            showCustomAlert(
+                CUSTOM_ALERT_MESSAGES.missingName
             );
 
             nameInput.focus();
@@ -2241,8 +2624,8 @@ micButtonParticipant.classList.remove(
                 error
             );
 
-            alert(
-                "Unable to contact the conference room."
+            showCustomAlert(
+                CUSTOM_ALERT_MESSAGES.conferenceUnavailable
             );
 
             knockButton.disabled =
@@ -2489,8 +2872,8 @@ if(conferenceArea){
         "#ff4444";
 
 
-    alert(
-        "The administrator has removed you from the conference."
+    showCustomAlert(
+        CUSTOM_ALERT_MESSAGES.removed
     );
 
 }
@@ -2660,8 +3043,8 @@ function showDeniedScreen(){
         "#ff4444";
 
 
-    alert(
-        "The administrator did not allow entry to the conference."
+    showCustomAlert(
+        CUSTOM_ALERT_MESSAGES.denied
     );
 
 }
@@ -2779,9 +3162,10 @@ function subscribeToConference(){
              * Alert administrator.
              */
 
-            alert(
-                payload.new.participant_name +
-                " has left the conference."
+            showCustomAlert(
+                CUSTOM_ALERT_MESSAGES.participantLeft(
+                    payload.new.participant_name
+                )
             );
 
         }
@@ -3192,9 +3576,8 @@ async function allowParticipant(id){
             error
         );
 
-        alert(
-            "Unable to allow participant.\n\n" +
-            error.message
+        showCustomAlert(
+            CUSTOM_ALERT_MESSAGES.allowError(error)
         );
 
         return;
@@ -3360,9 +3743,8 @@ async function removeParticipant(id){
             updateError
         );
 
-        alert(
-            "Unable to remove participant.\n\n" +
-            updateError.message
+        showCustomAlert(
+            CUSTOM_ALERT_MESSAGES.removeError(updateError)
         );
 
         return;
@@ -3477,8 +3859,8 @@ adminCameraButton.addEventListener(
 
             }catch(error){
 
-                alert(
-                    "Unable to access the administrator camera."
+                showCustomAlert(
+                    CUSTOM_ALERT_MESSAGES.administratorCamera
                 );
 
                 console.error(error);
@@ -3604,8 +3986,8 @@ async function requestAdministratorMedia(){
 
     }catch(error){
 
-        alert(
-            "Microphone permission was not granted."
+        showCustomAlert(
+            CUSTOM_ALERT_MESSAGES.administratorMicrophone
         );
 
         console.error(
@@ -3971,9 +4353,8 @@ async function denyParticipant(id){
             error
         );
 
-        alert(
-            "Unable to deny participant.\n\n" +
-            error.message
+        showCustomAlert(
+            CUSTOM_ALERT_MESSAGES.denyError(error)
         );
 
         return;
@@ -4322,8 +4703,8 @@ function assignParticipantToTile(
        No available tiles remain.
     */
 
-    alert(
-        "The conference is full. Maximum 8 participants plus the administrator."
+    showCustomAlert(
+        CUSTOM_ALERT_MESSAGES.conferenceFull
     );
 
 }
@@ -4692,9 +5073,9 @@ leaveButton.addEventListener(
     async function(){
 
         if(
-            !confirm(
-                "Leave this conference?"
-            )
+            !(await showCustomConfirm(
+                CUSTOM_ALERT_MESSAGES.leaveConfirm
+            ))
         ){
 
             return;
@@ -4720,8 +5101,8 @@ leaveButton.addEventListener(
                 "LEAVE ERROR: No participant ID found."
             );
 
-            alert(
-                "Unable to identify your conference session."
+            showCustomAlert(
+                CUSTOM_ALERT_MESSAGES.sessionNotFound
             );
 
             return;
@@ -4762,9 +5143,8 @@ await supabaseClient
                 error
             );
 
-            alert(
-                "Unable to leave the conference.\n\n" +
-                error.message
+            showCustomAlert(
+                CUSTOM_ALERT_MESSAGES.leaveError(error)
             );
 
             return;
@@ -4901,70 +5281,6 @@ function playAdminChatNotification(){
 
 }
 
-function playParticipantChatNotification(){
-
-    try{
-
-        const AudioContext =
-            window.AudioContext ||
-            window.webkitAudioContext;
-
-        const audioContext =
-            new AudioContext();
-
-        const oscillator =
-            audioContext.createOscillator();
-
-        const gain =
-            audioContext.createGain();
-
-        oscillator.type = "sine";
-
-        oscillator.frequency.setValueAtTime(
-            660,
-            audioContext.currentTime
-        );
-
-        oscillator.frequency.setValueAtTime(
-            880,
-            audioContext.currentTime + 0.12
-        );
-
-        gain.gain.setValueAtTime(
-            0.0001,
-            audioContext.currentTime
-        );
-
-        gain.gain.exponentialRampToValueAtTime(
-            0.25,
-            audioContext.currentTime + 0.01
-        );
-
-        gain.gain.exponentialRampToValueAtTime(
-            0.0001,
-            audioContext.currentTime + 0.30
-        );
-
-        oscillator.connect(gain);
-        gain.connect(audioContext.destination);
-
-        oscillator.start();
-
-        oscillator.stop(
-            audioContext.currentTime + 0.30
-        );
-
-    }catch(error){
-
-        console.warn(
-            "Participant chat notification sound unavailable:",
-            error
-        );
-
-    }
-
-}
-
 function playParticipantLeftNotification(){
 
     try{
@@ -5076,32 +5392,11 @@ if(chatTile){
             appendChatMessage(adminChatMessages, false, message.senderName || "Participant", message.text);
             renderAdminChatRecipients();
         }
-}else{
-
-    if(
-        message.recipientId === window.myParticipantId
-    ){
-
-        appendChatMessage(
-            participantChatMessages,
-            message.senderId === window.myParticipantId,
-            message.senderName || "Administrator",
-            message.text
-        );
-
-        if(message.senderId === "ADMIN"){
-
-            playParticipantChatNotification();
-
-            alert(
-                "The Administrator sent you a chat message."
-            );
-
-        }
-
-    }
-
-}
+            }else{
+                if(message.recipientId === window.myParticipantId){
+                    appendChatMessage(participantChatMessages, message.senderId === window.myParticipantId, message.senderName || "Administrator", message.text);
+                }
+            }
         })
         .subscribe(function(status){ console.log("Chat channel:", status); });
 }
