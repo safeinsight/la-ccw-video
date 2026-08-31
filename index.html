@@ -5523,9 +5523,30 @@ if(chatTile){
             renderAdminChatRecipients();
         }
 }else{
-    if(message.recipientId === window.myParticipantId){
-        appendChatMessage(participantChatMessages, message.senderId === window.myParticipantId, message.senderName || "Administrator", message.text);
+
+    if(
+        message.recipientId === window.myParticipantId
+    ){
+
+        appendChatMessage(
+            participantChatMessages,
+            message.senderId === window.myParticipantId,
+            message.senderName || "Administrator",
+            message.text
+        );
+
+        if(message.senderId === "ADMIN"){
+
+            playParticipantChatNotification();
+
+            alert(
+                "The Administrator sent you a chat message."
+            );
+
+        }
+
     }
+
 }
         })
         .subscribe(function(status){ console.log("Chat channel:", status); });
