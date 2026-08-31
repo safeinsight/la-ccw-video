@@ -2731,38 +2731,73 @@ function subscribeToConference(){
             }
 
         )
-        .on(
+        
+.on(
+    "postgres_changes",
+    {
+        event: "UPDATE",
+        schema: "public",
+        table:
+            "conference_participants",
+        filter:
+            "room_id=eq." + ROOM_ID
+    },
+    function(payload){
 
-            "postgres_changes",
-
-            {
-                event: "UPDATE",
-
-                schema: "public",
-
-                table:
-                    "conference_participants",
-
-                filter:
-                    "room_id=eq." + ROOM_ID
-
-            },
-
-            function(payload){
-
-                console.log(
-                    "PARTICIPANT UPDATE:",
-                    payload.new
-                );
+        console.log(
+            "PARTICIPANT UPDATE:",
+            payload.new
+        );
 
 
-                updateAdministratorParticipant(
-                    payload.new
-                );
+        /*
+         * Detect a participant leaving.
+         *
+         * Only trigger this when the status
+         * actually changes INTO "left".
+         */
 
-            }
+        if(
+            payload.new.status === "left" &&
+            payload.old.status !== "left"
+        ){
 
-        )
+            console.log(
+                "PARTICIPANT LEFT:",
+                payload.new
+            );
+
+
+            /*
+             * Play administrator notification sound.
+             */
+
+            playParticipantLeftNotification();
+
+
+            /*
+             * Alert administrator.
+             */
+
+            alert(
+                payload.new.participant_name +
+                " has left the conference."
+            );
+
+        }
+
+
+        /*
+         * Continue with the normal participant
+         * update processing.
+         */
+
+        updateAdministratorParticipant(
+            payload.new
+        );
+
+    }
+)
 
         .on(
 
