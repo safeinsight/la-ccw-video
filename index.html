@@ -3100,16 +3100,18 @@ function subscribeToConference(){
                     payload.new;
 
 
-                if(
-                    participant.status ===
-                    "waiting"
-                ){
+if(
+    participant.status ===
+    "waiting"
+){
 
-                    addWaitingParticipantFromDatabase(
-                        participant
-                    );
+    playParticipantKnockNotification();
 
-                }
+    addWaitingParticipantFromDatabase(
+        participant
+    );
+
+}
 
             }
 
