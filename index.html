@@ -2751,10 +2751,10 @@ function subscribeToConference(){
 
 
         /*
-         * Detect a participant leaving.
+         * Participant has left.
          *
-         * Only trigger this when the status
-         * actually changes INTO "left".
+         * Clean up the administrator interface
+         * FIRST.
          */
 
         if(
@@ -2763,33 +2763,44 @@ function subscribeToConference(){
         ){
 
             console.log(
-                "PARTICIPANT LEFT:",
+                "PARTICIPANT LEFT - CLEANING UP ADMIN VIEW:",
                 payload.new
             );
 
 
             /*
-             * Play administrator notification sound.
+             * Remove participant from:
+             * - administrator control panel
+             * - participants array
+             * - video grid
+             */
+
+            updateAdministratorParticipant(
+                payload.new
+            );
+
+
+            /*
+             * NOW notify the administrator.
              */
 
             playParticipantLeftNotification();
 
-
-            /*
-             * Alert administrator.
-             */
 
             alert(
                 payload.new.participant_name +
                 " has left the conference."
             );
 
+
+            return;
+
         }
 
 
         /*
-         * Continue with the normal participant
-         * update processing.
+         * All other participant updates continue
+         * through the normal update function.
          */
 
         updateAdministratorParticipant(
