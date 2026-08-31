@@ -3113,10 +3113,15 @@ if(
 
     playParticipantKnockNotification();
 
+    showCustomAlert(
+        CUSTOM_ALERT_MESSAGES.participantKnock(
+            participant.participant_name
+        )
+    );
+
     addWaitingParticipantFromDatabase(
         participant
     );
-
 }
 
             }
