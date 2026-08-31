@@ -2253,6 +2253,12 @@ const CUSTOM_ALERT_MESSAGES = {
     conferenceUnavailable:
         "Unable to contact the conference room.",
 
+        participantChat:
+        "The Administrator sent you a chat message.",
+
+        participantKnock:
+        name => name + " is requesting to enter the conference.",
+
     removed:
         "The administrator has removed you from the conference.",
 
@@ -5535,15 +5541,14 @@ if(chatTile){
             message.text
         );
 
-        if(message.senderId === "ADMIN"){
+if(message.senderId === "ADMIN"){
 
-            playParticipantChatNotification();
+    playParticipantChatNotification();
 
-            alert(
-                "The Administrator sent you a chat message."
-            );
-
-        }
+    showCustomAlert(
+        CUSTOM_ALERT_MESSAGES.participantChat
+    );
+}
 
     }
 
