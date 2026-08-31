@@ -4203,6 +4203,34 @@ function assignParticipantToTile(
     participant
 ){
 
+    /*
+       First check whether this participant
+       already has a video tile.
+
+       If they do, simply update that tile
+       and do NOT assign another tile.
+    */
+
+    const existingTile =
+        document.querySelector(
+            `.videoTile[data-participant-id="${participant.id}"]`
+        );
+
+    if(existingTile){
+
+        updateParticipantTile(
+            participant
+        );
+
+        return;
+    }
+
+
+    /*
+       Participant does not have a tile yet.
+       Find the first available tile.
+    */
+
     const availableTiles = [
         1,
         2,
@@ -4225,28 +4253,39 @@ function assignParticipantToTile(
             );
 
 
-       if(
-    !tile.dataset.participantId
-){
-    tile.dataset.participantId =
-        participant.id;
+        if(
+            tile &&
+            !tile.dataset.participantId
+        ){
 
-    tile.addEventListener(
-        "click",
-        function(){
-            tile.classList.remove("chatAlert");
+            tile.dataset.participantId =
+                participant.id;
+
+
+            tile.addEventListener(
+                "click",
+                function(){
+                    tile.classList.remove(
+                        "chatAlert"
+                    );
+                }
+            );
+
+
+            updateParticipantTile(
+                participant
+            );
+
+
+            return;
         }
-    );
-
-    updateParticipantTile(
-        participant
-    );
-
-    return;
-}
 
     }
 
+
+    /*
+       No available tiles remain.
+    */
 
     alert(
         "The conference is full. Maximum 8 participants plus the administrator."
