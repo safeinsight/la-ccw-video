@@ -3007,7 +3007,7 @@ if(
 
     delete adminChatThreads[String(participant.id)];
 
-adminSelectedChatParticipants.delete(
+adminChatSelectedParticipants.delete(
     String(participant.id)
 );
 
@@ -3401,7 +3401,7 @@ async function removeParticipant(id){
      */
     delete adminChatThreads[String(id)];
 
-    adminSelectedChatParticipants.delete(
+    adminChatSelectedParticipants.delete(
         String(id)
     );
 
