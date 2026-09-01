@@ -3561,53 +3561,105 @@ async function handleParticipantWebRTCSignal(
 
         }
 
-        if(
-            signal.media ===
-            "camera"
-        ){
+if(
+    signal.media ===
+    "camera"
+){
 
-            localStream
-                .getVideoTracks()
-                .forEach(
-                    track => {
+    localStream
+        .getVideoTracks()
+        .forEach(
+            track => {
 
-                        track.enabled =
-                            signal.enabled;
+                track.enabled =
+                    signal.enabled;
 
-                    }
-                );
+            }
+        );
 
-            console.log(
-                "PARTICIPANT CAMERA CONTROL:",
-                signal.enabled
-            );
+
+    participantLocalVideo.style.display =
+        signal.enabled
+        ? "block"
+        : "none";
+
+
+    participantVideoPlaceholder.style.display =
+        signal.enabled
+        ? "none"
+        : "flex";
+
+
+    cameraButtonParticipant.textContent =
+        signal.enabled
+        ? "📹 Camera ON"
+        : "📹 Camera OFF";
+
+
+    cameraButtonParticipant.classList.toggle(
+        "active",
+        signal.enabled
+    );
+
+
+    console.log(
+        "PARTICIPANT CAMERA CONTROL:",
+        signal.enabled
+    );
+
+}
+
+
+if(
+    signal.media ===
+    "microphone"
+){
+
+    const audioTracks =
+        localStream.getAudioTracks();
+
+
+    if(!audioTracks.length){
+
+        console.warn(
+            "PARTICIPANT MICROPHONE CONTROL: No audio track found."
+        );
+
+        return;
+
+    }
+
+
+    audioTracks.forEach(
+        track => {
+
+            track.enabled =
+                signal.enabled;
 
         }
+    );
 
 
-        if(
-            signal.media ===
-            "microphone"
-        ){
+    micButtonParticipant.textContent =
+        signal.enabled
+        ? "🎤 Mic ON"
+        : "🔇 Mic OFF";
 
-            localStream
-                .getAudioTracks()
-                .forEach(
-                    track => {
 
-                        track.enabled =
-                            signal.enabled;
+    micButtonParticipant.classList.toggle(
+        "active",
+        signal.enabled
+    );
 
-                    }
-                );
 
-            console.log(
-                "PARTICIPANT MICROPHONE CONTROL:",
-                signal.enabled
-            );
+    console.log(
+        "PARTICIPANT MICROPHONE CONTROL:",
+        signal.enabled,
+        "Audio track enabled:",
+        audioTracks[0].enabled
+    );
 
-        }
-
+}
         return;
     }
 
