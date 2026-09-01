@@ -418,6 +418,13 @@ input {
     color: #ffffff !important;
 }
 
+@media (max-width: 768px) {
+    .toolbarButton.redButton:hover {
+        background: #ff0000 !important;
+        color: #ffffff !important;
+    }
+}
+
 .toolbarButton.blueButton {
     background: #0000ff !important;
     color: #ffffff !important;
@@ -4048,14 +4055,16 @@ micButton.addEventListener(
         administratorMicOn =
             !administratorMicOn;
 
-        audioTracks.forEach(
-            track => {
-                track.enabled =
-                    administratorMicOn;
-            }
-        );
+audioTracks.forEach(
+    track => {
+        track.enabled =
+            administratorMicOn;
+    }
+);
 
-        updateAdministratorMicButton();
+updateAdministratorMicButton();
+
+updateAdministratorMicStatus();
 
     }
 );
