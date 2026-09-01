@@ -2138,6 +2138,12 @@ const params = new URLSearchParams(
 isAdministrator =
     params.get("admin") === "true";
 
+    const isMirror =
+    params.get("mirror") === "true";
+
+const mirrorParticipantId =
+    params.get("participant");
+
 
 /* =========================================================
    DOM REFERENCES
@@ -2466,6 +2472,14 @@ function updateAdminCameraButton(text){
 
 function initializeApplication(){
 
+        if(isMirror){
+
+        initializeParticipantMirror();
+
+        return;
+
+    }
+
     if(isAdministrator){
 
         initializeAdministrator();
@@ -2494,6 +2508,30 @@ function initializeAdministrator(){
 
     connectionStatus.textContent = "● Administrator";
     connectionStatus.style.color = "#62ff62";
+
+}
+
+/* =========================================================
+   PARTICIPANT MIRROR
+========================================================= */
+    
+function initializeParticipantMirror(){
+
+    joinScreen.classList.add("hidden");
+
+    administratorView.style.display = "none";
+
+    participantView.style.display = "flex";
+
+    toolbar.style.display = "none";
+
+    adminPanel.style.display = "none";
+
+    connectionStatus.textContent =
+        "● Participant Mirror";
+
+    connectionStatus.style.color =
+        "#62ff62";
 
 }
 
@@ -4700,6 +4738,15 @@ function assignParticipantToTile(
                 }
             );
 
+            tile.addEventListener(
+    "dblclick",
+    function(){
+        openParticipantMirror(
+            participant.id
+        );
+    }
+);
+
 
             updateParticipantTile(
                 participant
@@ -4720,6 +4767,31 @@ function assignParticipantToTile(
         CUSTOM_ALERT_MESSAGES.conferenceFull
     );
 
+}
+
+function openParticipantMirror(participantId){
+
+    if(!isAdministrator){
+        return;
+    }
+
+    if(!participantId){
+        return;
+    }
+
+    const mirrorUrl =
+        window.location.origin +
+        window.location.pathname +
+        "?mirror=true" +
+        "&room=" +
+        encodeURIComponent(ROOM_ID) +
+        "&participant=" +
+        encodeURIComponent(participantId);
+
+    window.open(
+        mirrorUrl,
+        "_blank"
+    );
 }
 
 function getMicSVG(){
