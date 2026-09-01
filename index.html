@@ -2263,6 +2263,21 @@ const leaveButtonParticipant = document.getElementById("leaveButtonParticipant")
 const participantBrowserFrame =
     document.getElementById("participantBrowserFrame");
 
+const viewFullScreenButton =
+    document.getElementById("viewFullScreenButton");
+
+viewFullScreenButton.addEventListener(
+    "click",
+    function(){
+
+        window.open(
+            participantBrowserFrame.src,
+            "_blank"
+        );
+
+    }
+);
+
 /* =========================================================
    CUSTOM ALERT / CONFIRM REFERENCES
 ========================================================= */
