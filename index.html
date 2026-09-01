@@ -3746,7 +3746,28 @@ async function createAdminPeerConnection(
         peerConnection
     );
 
+/*
+ * Tell WebRTC that the administrator
+ * wants to RECEIVE participant video
+ * and audio.
+ *
+ * The administrator does NOT send
+ * media to the participant.
+ */
 
+peerConnection.addTransceiver(
+    "video",
+    {
+        direction: "recvonly"
+    }
+);
+
+peerConnection.addTransceiver(
+    "audio",
+    {
+        direction: "recvonly"
+    }
+);
 
 
     /*
