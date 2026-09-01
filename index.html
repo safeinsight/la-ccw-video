@@ -6100,6 +6100,10 @@ async function toggleParticipantCamera(id){
 
     renderParticipants();
 
+    updateParticipantTileStatus(
+        participant
+    );
+
 }
 
 
@@ -6153,6 +6157,10 @@ async function toggleParticipantMic(id){
 
 
     renderParticipants();
+
+        updateParticipantTileStatus(
+        participant
+    );
 
 }
 
@@ -6220,14 +6228,14 @@ function assignParticipantToTile(
             `.videoTile[data-participant-id="${participant.id}"]`
         );
 
-    if(existingTile){
+if(existingTile){
 
-        updateParticipantTile(
-            participant
-        );
+    updateParticipantTileStatus(
+        participant
+    );
 
-        return;
-    }
+    return;
+}
 
 
     /*
@@ -6666,6 +6674,105 @@ if(participant.cameraOn){
 
 }
 
+/* =========================================================
+   UPDATE PARTICIPANT TILE STATUS ONLY
+========================================================= */
+
+function updateParticipantTileStatus(
+    participant
+){
+
+    const tile =
+        document.querySelector(
+            `.videoTile[data-participant-id="${participant.id}"]`
+        );
+
+
+    if(!tile){
+
+        return;
+
+    }
+
+
+    /*
+     * Update microphone icon.
+     */
+
+    const statusIcons =
+        tile.querySelectorAll(
+            ".tileStatus .statusIcon"
+        );
+
+
+    if(statusIcons.length >= 1){
+
+        statusIcons[0].classList.toggle(
+            "on",
+            participant.micOn
+        );
+
+        statusIcons[0].classList.toggle(
+            "off",
+            !participant.micOn
+        );
+
+    }
+
+
+    /*
+     * Update camera icon.
+     */
+
+    if(statusIcons.length >= 2){
+
+        statusIcons[1].classList.toggle(
+            "on",
+            participant.cameraOn
+        );
+
+        statusIcons[1].classList.toggle(
+            "off",
+            !participant.cameraOn
+        );
+
+    }
+
+
+    /*
+     * Update administrator camera button.
+     */
+
+    const adminButtons =
+        tile.querySelectorAll(
+            ".adminControls button"
+        );
+
+
+    if(adminButtons.length >= 1){
+
+        adminButtons[0].textContent =
+            participant.cameraOn
+            ? "Camera OFF"
+            : "Camera ON";
+
+    }
+
+
+    /*
+     * Update administrator microphone button.
+     */
+
+    if(adminButtons.length >= 2){
+
+        adminButtons[1].textContent =
+            participant.micOn
+            ? "Mute"
+            : "Unmute";
+
+    }
+
+}
 
 /* =========================================================
    CLEAR PARTICIPANT TILE
