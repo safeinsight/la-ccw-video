@@ -6070,8 +6070,10 @@ async function toggleParticipantCamera(id){
         return;
     }
 
+
     participant.cameraOn =
         !participant.cameraOn;
+
 
     await sendWebRTCSignal({
 
@@ -6095,6 +6097,7 @@ async function toggleParticipantCamera(id){
 
     });
 
+
     renderParticipants();
 
 }
@@ -6116,6 +6119,7 @@ async function toggleParticipantMic(id){
         return;
     }
 
+
     /*
      * Administrator can always
      * change the participant microphone.
@@ -6123,6 +6127,7 @@ async function toggleParticipantMic(id){
 
     participant.micOn =
         !participant.micOn;
+
 
     await sendWebRTCSignal({
 
@@ -6145,6 +6150,7 @@ async function toggleParticipantMic(id){
             participant.micOn
 
     });
+
 
     renderParticipants();
 
