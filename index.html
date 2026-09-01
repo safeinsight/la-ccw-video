@@ -3886,33 +3886,7 @@ async function startParticipantWebRTC(
         );
 
 
-    /*
-     * Receive administrator media.
-     */
 
-    participantPeerConnection.ontrack =
-        function(event){
-
-            console.log(
-                "PARTICIPANT RECEIVED ADMIN TRACK:",
-                event
-            );
-
-
-            const remoteStream =
-                event.streams[0];
-
-
-            if(!remoteStream){
-                return;
-            }
-
-
-            attachAdministratorRemoteStream(
-                remoteStream
-            );
-
-        };
 
 
     /*
@@ -4023,7 +3997,8 @@ async function startParticipantWebRTC(
     );
 
 }
-    /* =========================================================
+    
+/* =========================================================
    PARTICIPANT WEBRTC SIGNAL HANDLER
 ========================================================= */
 
@@ -4158,28 +4133,6 @@ if(
             );
 
 
-        participantPeerConnection.ontrack =
-            function(event){
-
-                console.log(
-                    "PARTICIPANT RECEIVED ADMIN TRACK:",
-                    event
-                );
-
-
-                const remoteStream =
-                    event.streams[0];
-
-
-                if(remoteStream){
-
-                    attachAdministratorRemoteStream(
-                        remoteStream
-                    );
-
-                }
-
-            };
 
 
         participantPeerConnection.onicecandidate =
@@ -4385,23 +4338,6 @@ async function createAdminPeerConnection(
     );
 
 
-    /*
-     * Send administrator camera
-     * and microphone to participant.
-     */
-
-    localStream
-        .getTracks()
-        .forEach(
-            track => {
-
-                peerConnection.addTrack(
-                    track,
-                    localStream
-                );
-
-            }
-        );
 
 
     /*
@@ -4775,80 +4711,7 @@ function attachRemoteParticipantStream(
 
 }
 
-/* =========================================================
-   PARTICIPANT RECEIVES ADMIN VIDEO
-========================================================= */
 
-function attachAdministratorRemoteStream(
-    remoteStream
-){
-
-    console.log(
-        "Attaching administrator WebRTC stream."
-    );
-
-
-    let video =
-        document.getElementById(
-            "administratorRemoteVideo"
-        );
-
-
-    if(!video){
-
-        video =
-            document.createElement(
-                "video"
-            );
-
-
-        video.id =
-            "administratorRemoteVideo";
-
-
-        video.autoplay =
-            true;
-
-
-        video.playsInline =
-            true;
-
-
-        video.style.width =
-            "100%";
-
-
-        video.style.height =
-            "100%";
-
-
-        video.style.objectFit =
-            "cover";
-
-
-        conferenceArea.appendChild(
-            video
-        );
-
-    }
-
-
-    video.srcObject =
-        remoteStream;
-
-
-    video.play().catch(
-        function(error){
-
-            console.warn(
-                "Administrator video autoplay failed:",
-                error
-            );
-
-        }
-    );
-
-}
 
 /* =========================================================
    CLOSE ADMINISTRATOR WEBRTC CONNECTION
