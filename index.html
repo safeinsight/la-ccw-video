@@ -4085,142 +4085,15 @@ if(
     "offer"
 ){
 
-    /*
-     * The administrator's offer may arrive
-     * before startParticipantWebRTC() has
-     * completed.
-     *
-     * Make sure the participant peer
-     * connection exists before accepting
-     * the offer.
-     */
+if(!participantPeerConnection){
 
-    if(!participantPeerConnection){
+    console.error(
+        "PARTICIPANT WEBRTC ERROR: peer connection was not created before offer."
+    );
 
-        console.log(
-            "Participant peer connection missing. Creating it now."
-        );
-
-
-        if(!localStream){
-
-            console.error(
-                "Cannot create participant WebRTC connection: localStream does not exist."
-            );
-
-            return;
-
-        }
-
-
-        participantPeerConnection =
-            new RTCPeerConnection(
-                rtcConfiguration
-            );
-
-
-        localStream
-            .getTracks()
-            .forEach(
-                track => {
-
-                    participantPeerConnection.addTrack(
-                        track,
-                        localStream
-                    );
-
-                }
-            );
-
-
-
-
-        participantPeerConnection.onicecandidate =
-            async function(event){
-
-                if(!event.candidate){
-
-                    return;
-
-                }
-
-
-                await sendWebRTCSignal({
-
-                    type:
-                        "ice-candidate",
-
-                    senderId:
-                        window.myParticipantId,
-
-                    targetId:
-                        "administrator",
-
-                    participantId:
-                        window.myParticipantId,
-
-                    candidate:
-                        event.candidate
-
-                });
-
-            };
-
-
-        participantPeerConnection.onconnectionstatechange =
-            function(){
-
-                console.log(
-                    "PARTICIPANT WEBRTC CONNECTION STATE:",
-                    participantPeerConnection.connectionState
-                );
-
-            };
-
-        /*
- * Add any ICE candidates that arrived
- * before the peer connection existed.
- */
-
-if(
-    pendingParticipantIceCandidates.length
-){
-
-    for(
-        const candidate of
-        pendingParticipantIceCandidates
-    ){
-
-        try{
-
-            await participantPeerConnection.addIceCandidate(
-                candidate
-            );
-
-
-            console.log(
-                "Queued participant ICE candidate added."
-            );
-
-
-        }catch(error){
-
-            console.error(
-                "QUEUED PARTICIPANT ICE ERROR:",
-                error
-            );
-
-        }
-
-    }
-
-
-    pendingParticipantIceCandidates =
-        [];
+    return;
 
 }
-
-    }
 
 
         await participantPeerConnection.setRemoteDescription(
