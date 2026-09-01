@@ -1005,6 +1005,12 @@ input {
     background:#000;
 }
 
+#adminLmsLoginButton {
+    right:10px;
+    top:10px;
+}
+
+
 .participantPanel { position:relative; min-width:0; min-height:0; background:#151515; border:1px solid #333; border-radius:6px; overflow:hidden; display:flex; flex-direction:column; }
 #participantLeft {
     width:50%;
@@ -1893,6 +1899,7 @@ input {
             <button class="toolbarButton" id="adminCameraButton">Camera OFF</button>
             <button class="toolbarButton redButton" id="leaveButton">EXIT ROOM</button>
             <button class="toolbarButton" id="micButton" style="background-color:#777;">🔇 Mic OFF</button>
+            <button type="button" class="toolbarButton redButton" id="adminLmsLoginButton" onclick="window.open('https://admin.acadio.com/auth?go=/dashboard')">Admin LMS</button>
             <button class="toolbarButton redButton" id="adminPanelButton">Participants</button>
         </div>
 
