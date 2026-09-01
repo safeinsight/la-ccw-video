@@ -1145,6 +1145,31 @@ input {
 
     background:#fff;
 }
+
+#viewFullScreenButton {
+    position:absolute;
+    right:10px;
+    bottom:10px;
+
+    z-index:20;
+
+    border:none;
+    border-radius:6px;
+
+    padding:10px 14px;
+
+    background:#ff0000;
+    color:#ffffff;
+
+    font-size:14px;
+    font-weight:bold;
+
+    cursor:pointer;
+}
+
+#viewFullScreenButton:hover {
+    background:#cc0000;
+}
     
 .toolbarView { display:none; width:100%; align-items:center; justify-content:center; gap:10px; }
 #administratorToolbar { display:none; }
@@ -1831,14 +1856,23 @@ input {
 
 
 
-    <div id="browserFrameContainer">
-        <iframe
-            id="participantBrowserFrame"
-            src="https://safeinsight.acadio.com/auth/signin?go=/dashboard"
-            title="Training Browser"
-            allow="camera; microphone; fullscreen"
-        ></iframe>
-    </div>
+<div id="browserFrameContainer">
+
+    <iframe
+        id="participantBrowserFrame"
+        src="https://safeinsight.acadio.com/auth/signin?go=/dashboard"
+        title="Training Browser"
+        allow="camera; microphone; fullscreen"
+    ></iframe>
+
+    <button
+        type="button"
+        id="viewFullScreenButton"
+    >
+        View Full Screen
+    </button>
+
+</div>
 
 </div>
 
