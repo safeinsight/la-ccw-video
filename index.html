@@ -2292,6 +2292,8 @@ let participantPeerConnection =
 let webrtcSignalingChannel =
     null;
 
+let pendingParticipantIceCandidates =
+    [];
 
 /* =========================================================
    DETERMINE ADMINISTRATOR MODE
@@ -4039,55 +4041,233 @@ async function handleParticipantWebRTCSignal(
      * Administrator ICE candidate.
      */
 
-    if(
-        signal.type ===
-        "ice-candidate"
-    ){
+if(
+    signal.type ===
+    "ice-candidate"
+){
 
-        if(
-            participantPeerConnection &&
-            signal.candidate
-        ){
-
-            try{
-
-                await participantPeerConnection.addIceCandidate(
-                    signal.candidate
-                );
-
-            }catch(error){
-
-                console.error(
-                    "PARTICIPANT ICE CANDIDATE ERROR:",
-                    error
-                );
-
-            }
-
-        }
+    if(!signal.candidate){
 
         return;
+
     }
+
+
+    /*
+     * If the participant peer connection
+     * does not exist yet, save the candidate.
+     */
+
+    if(!participantPeerConnection){
+
+        pendingParticipantIceCandidates.push(
+            signal.candidate
+        );
+
+
+        console.log(
+            "Queued participant ICE candidate."
+        );
+
+
+        return;
+
+    }
+
+
+    try{
+
+        await participantPeerConnection.addIceCandidate(
+            signal.candidate
+        );
+
+
+        console.log(
+            "Participant ICE candidate added."
+        );
+
+
+    }catch(error){
+
+        console.error(
+            "PARTICIPANT ICE CANDIDATE ERROR:",
+            error
+        );
+
+    }
+
+
+    return;
+}
 
 
     /*
      * Administrator's offer.
      */
 
-    if(
-        signal.type ===
-        "offer"
-    ){
+if(
+    signal.type ===
+    "offer"
+){
 
-        if(!participantPeerConnection){
+    /*
+     * The administrator's offer may arrive
+     * before startParticipantWebRTC() has
+     * completed.
+     *
+     * Make sure the participant peer
+     * connection exists before accepting
+     * the offer.
+     */
+
+    if(!participantPeerConnection){
+
+        console.log(
+            "Participant peer connection missing. Creating it now."
+        );
+
+
+        if(!localStream){
 
             console.error(
-                "Participant peer connection does not exist."
+                "Cannot create participant WebRTC connection: localStream does not exist."
             );
 
             return;
 
         }
+
+
+        participantPeerConnection =
+            new RTCPeerConnection(
+                rtcConfiguration
+            );
+
+
+        localStream
+            .getTracks()
+            .forEach(
+                track => {
+
+                    participantPeerConnection.addTrack(
+                        track,
+                        localStream
+                    );
+
+                }
+            );
+
+
+        participantPeerConnection.ontrack =
+            function(event){
+
+                console.log(
+                    "PARTICIPANT RECEIVED ADMIN TRACK:",
+                    event
+                );
+
+
+                const remoteStream =
+                    event.streams[0];
+
+
+                if(remoteStream){
+
+                    attachAdministratorRemoteStream(
+                        remoteStream
+                    );
+
+                }
+
+            };
+
+
+        participantPeerConnection.onicecandidate =
+            async function(event){
+
+                if(!event.candidate){
+
+                    return;
+
+                }
+
+
+                await sendWebRTCSignal({
+
+                    type:
+                        "ice-candidate",
+
+                    senderId:
+                        window.myParticipantId,
+
+                    targetId:
+                        "administrator",
+
+                    participantId:
+                        window.myParticipantId,
+
+                    candidate:
+                        event.candidate
+
+                });
+
+            };
+
+
+        participantPeerConnection.onconnectionstatechange =
+            function(){
+
+                console.log(
+                    "PARTICIPANT WEBRTC CONNECTION STATE:",
+                    participantPeerConnection.connectionState
+                );
+
+            };
+
+        /*
+ * Add any ICE candidates that arrived
+ * before the peer connection existed.
+ */
+
+if(
+    pendingParticipantIceCandidates.length
+){
+
+    for(
+        const candidate of
+        pendingParticipantIceCandidates
+    ){
+
+        try{
+
+            await participantPeerConnection.addIceCandidate(
+                candidate
+            );
+
+
+            console.log(
+                "Queued participant ICE candidate added."
+            );
+
+
+        }catch(error){
+
+            console.error(
+                "QUEUED PARTICIPANT ICE ERROR:",
+                error
+            );
+
+        }
+
+    }
+
+
+    pendingParticipantIceCandidates =
+        [];
+
+}
+
+    }
 
 
         await participantPeerConnection.setRemoteDescription(
@@ -4146,9 +4326,29 @@ async function createAdminPeerConnection(
 ){
 
     console.log(
-        "Creating administrator WebRTC connection:",
+        "Creating administrator WebRTC connection for:",
         participantId
     );
+
+
+    /*
+     * Make absolutely sure the administrator
+     * media stream exists before creating
+     * the offer.
+     */
+
+    await initializeAdministratorMedia();
+
+
+    if(!localStream){
+
+        console.error(
+            "ADMIN WEBRTC ABORTED: administrator localStream does not exist."
+        );
+
+        return null;
+
+    }
 
 
     /*
@@ -4187,31 +4387,21 @@ async function createAdminPeerConnection(
 
     /*
      * Send administrator camera
-     * and microphone.
+     * and microphone to participant.
      */
 
-    if(localStream){
+    localStream
+        .getTracks()
+        .forEach(
+            track => {
 
-        localStream
-            .getTracks()
-            .forEach(
-                track => {
+                peerConnection.addTrack(
+                    track,
+                    localStream
+                );
 
-                    peerConnection.addTrack(
-                        track,
-                        localStream
-                    );
-
-                }
-            );
-
-    }else{
-
-        console.warn(
-            "Administrator localStream does not exist."
+            }
         );
-
-    }
 
 
     /*
@@ -4332,7 +4522,7 @@ async function createAdminPeerConnection(
 
 
     /*
-     * Administrator creates the offer.
+     * Create administrator offer.
      */
 
     const offer =
@@ -4513,60 +4703,70 @@ function attachRemoteParticipantStream(
     }
 
 
-    let video =
+    /*
+     * updateParticipantTile() already creates
+     * the video element.
+     *
+     * Use that existing video element.
+     */
+
+    const video =
         tile.querySelector(
-            ".remoteParticipantVideo"
+            "video"
         );
 
 
     if(!video){
 
-        video =
-            document.createElement(
-                "video"
-            );
-
-
-        video.className =
-            "remoteParticipantVideo";
-
-
-        video.autoplay =
-            true;
-
-
-        video.playsInline =
-            true;
-
-
-        video.style.width =
-            "100%";
-
-
-        video.style.height =
-            "100%";
-
-
-        video.style.objectFit =
-            "cover";
-
-
-        tile.appendChild(
-            video
+        console.warn(
+            "Participant video element not found:",
+            participantId
         );
+
+        return;
 
     }
 
+
+    /*
+     * Attach the actual WebRTC stream.
+     */
 
     video.srcObject =
         remoteStream;
 
 
-    video.play().catch(
+    video.autoplay =
+        true;
+
+
+    video.playsInline =
+        true;
+
+
+    video.muted =
+        true;
+
+
+    video.style.display =
+        "block";
+
+
+    video.play().then(
+        function(){
+
+            console.log(
+                "PARTICIPANT VIDEO ATTACHED TO ADMIN TILE:",
+                participantId
+            );
+
+        }
+    ).catch(
         function(error){
 
-            console.warn(
-                "Participant video autoplay failed:",
+            console.error(
+                "PARTICIPANT VIDEO PLAY FAILED:",
+                participantId,
                 error
             );
 
@@ -5557,11 +5757,20 @@ assignParticipantToTile(
 
 
 /*
+ * Make sure the administrator camera
+ * and microphone are ready before
+ * creating the WebRTC offer.
+ */
+
+await initializeAdministratorMedia();
+
+
+/*
  * Start WebRTC connection with
  * this participant.
  */
 
-createAdminPeerConnection(
+await createAdminPeerConnection(
     participant.id
 );
 
@@ -6755,19 +6964,26 @@ function updateParticipantTile(
        Video element.
     */
 
-    const video =
-        document.createElement(
-            "video"
-        );
+const video =
+    document.createElement(
+        "video"
+    );
 
-    video.autoplay =
-        true;
 
-    video.playsInline =
-        true;
+video.className =
+    "participantRemoteVideo";
 
-    video.muted =
-        true;
+
+video.autoplay =
+    true;
+
+
+video.playsInline =
+    true;
+
+
+video.muted =
+    true;
 
 
     /*
