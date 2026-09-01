@@ -2250,6 +2250,48 @@ let waitingParticipants = [];
 
 let nextParticipantId = 1;
 
+/* =========================================================
+   WEBRTC STATE
+========================================================= */
+
+const rtcConfiguration = {
+
+    iceServers: [
+
+        {
+            urls: "stun:stun.l.google.com:19302"
+        }
+
+    ]
+
+};
+
+
+/*
+ * Administrator:
+ * One RTCPeerConnection for each participant.
+ */
+
+const adminPeerConnections =
+    new Map();
+
+
+/*
+ * Participant:
+ * The administrator's RTCPeerConnection.
+ */
+
+let participantPeerConnection =
+    null;
+
+
+/*
+ * Supabase WebRTC signaling channel.
+ */
+
+let webrtcSignalingChannel =
+    null;
+
 
 /* =========================================================
    DETERMINE ADMINISTRATOR MODE
@@ -2617,6 +2659,484 @@ function updateAdminCameraButton(text){
     );
 
 }
+
+/* =========================================================
+   WEBRTC SIGNALING
+========================================================= */
+
+function initializeWebRTCSignaling(){
+
+    if(webrtcSignalingChannel){
+        return;
+    }
+
+    console.log(
+        "Initializing WebRTC signaling for room:",
+        ROOM_ID
+    );
+
+
+    webrtcSignalingChannel =
+        supabaseClient.channel(
+            "webrtc-room-" + ROOM_ID
+        );
+
+
+    webrtcSignalingChannel
+        .on(
+            "broadcast",
+            {
+                event: "webrtc-signal"
+            },
+            async function(payload){
+
+                console.log(
+                    "WEBRTC SIGNAL RECEIVED:",
+                    payload
+                );
+
+
+                const signal =
+                    payload.payload;
+
+
+                if(!signal){
+                    return;
+                }
+
+
+                /*
+                 * Ignore our own signaling messages.
+                 */
+
+                if(
+                    signal.senderId ===
+                    window.myParticipantId
+                ){
+                    return;
+                }
+
+
+                /*
+                 * Participant receives
+                 * administrator signaling.
+                 */
+
+                if(
+                    !isAdministrator &&
+                    signal.targetId ===
+                    window.myParticipantId
+                ){
+
+                    await handleParticipantWebRTCSignal(
+                        signal
+                    );
+
+                    return;
+                }
+
+
+                /*
+                 * Administrator receives
+                 * participant signaling.
+                 */
+
+                if(
+                    isAdministrator &&
+                    signal.targetId ===
+                    "administrator"
+                ){
+
+                    await handleAdminWebRTCSignal(
+                        signal
+                    );
+
+                    return;
+                }
+
+            }
+        )
+        .subscribe(
+            function(status){
+
+                console.log(
+                    "WebRTC signaling channel:",
+                    status
+                );
+
+            }
+        );
+
+
+    console.log(
+        "WebRTC signaling initialized."
+    );
+
+}
+
+async function sendWebRTCSignal(
+    signal
+){
+
+    if(!webrtcSignalingChannel){
+
+        console.error(
+            "WebRTC signaling channel is not initialized."
+        );
+
+        return;
+    }
+
+
+    console.log(
+        "Sending WebRTC signal:",
+        signal
+    );
+
+
+    const result =
+        await webrtcSignalingChannel.send({
+
+            type:
+                "broadcast",
+
+            event:
+                "webrtc-signal",
+
+            payload:
+                signal
+
+        });
+
+
+    console.log(
+        "WebRTC signal sent:",
+        result
+    );
+
+}
+
+/* =========================================================
+   ADMINISTRATOR WEBRTC CONNECTION
+========================================================= */
+
+async function createAdminPeerConnection(
+    participantId
+){
+
+    console.log(
+        "Creating administrator WebRTC connection for:",
+        participantId
+    );
+
+
+    /*
+     * Prevent duplicate connections.
+     */
+
+    if(
+        adminPeerConnections.has(
+            participantId
+        )
+    ){
+
+        console.log(
+            "Administrator peer connection already exists:",
+            participantId
+        );
+
+        return adminPeerConnections.get(
+            participantId
+        );
+
+    }
+
+
+    const peerConnection =
+        new RTCPeerConnection(
+            rtcConfiguration
+        );
+
+
+    adminPeerConnections.set(
+        participantId,
+        peerConnection
+    );
+
+
+    /*
+     * Send administrator's local media
+     * to the participant.
+     */
+
+    if(localStream){
+
+        localStream
+            .getTracks()
+            .forEach(
+                track => {
+
+                    peerConnection.addTrack(
+                        track,
+                        localStream
+                    );
+
+                }
+            );
+
+    }
+
+
+    /*
+     * Receive participant media.
+     */
+
+    peerConnection.ontrack =
+        function(event){
+
+            console.log(
+                "ADMIN RECEIVED REMOTE TRACK:",
+                participantId,
+                event
+            );
+
+
+            const remoteStream =
+                event.streams[0];
+
+
+            if(!remoteStream){
+                return;
+            }
+
+
+            attachRemoteParticipantStream(
+                participantId,
+                remoteStream
+            );
+
+        };
+
+
+    /*
+     * ICE candidate generated by
+     * administrator.
+     */
+
+    peerConnection.onicecandidate =
+        async function(event){
+
+            if(!event.candidate){
+                return;
+            }
+
+
+            await sendWebRTCSignal({
+
+                type:
+                    "ice-candidate",
+
+                senderId:
+                    "administrator",
+
+                targetId:
+                    participantId,
+
+                participantId:
+                    participantId,
+
+                candidate:
+                    event.candidate
+
+            });
+
+        };
+
+
+    /*
+     * Monitor connection.
+     */
+
+    peerConnection.onconnectionstatechange =
+        function(){
+
+            console.log(
+                "ADMIN WEBRTC CONNECTION STATE:",
+                participantId,
+                peerConnection.connectionState
+            );
+
+
+            if(
+                peerConnection.connectionState ===
+                "connected"
+            ){
+
+                console.log(
+                    "WEBRTC CONNECTED TO PARTICIPANT:",
+                    participantId
+                );
+
+            }
+
+
+            if(
+                peerConnection.connectionState ===
+                "failed"
+            ){
+
+                console.error(
+                    "WEBRTC CONNECTION FAILED:",
+                    participantId
+                );
+
+            }
+
+        };
+
+
+    /*
+     * Create the initial offer.
+     */
+
+    const offer =
+        await peerConnection.createOffer();
+
+
+    await peerConnection.setLocalDescription(
+        offer
+    );
+
+
+    await sendWebRTCSignal({
+
+        type:
+            "offer",
+
+        senderId:
+            "administrator",
+
+        targetId:
+            participantId,
+
+        participantId:
+            participantId,
+
+        offer:
+            offer
+
+    });
+
+
+    console.log(
+        "Administrator WebRTC offer sent:",
+        participantId
+    );
+
+
+    return peerConnection;
+
+}
+
+async function handleAdminWebRTCSignal(
+    signal
+){
+
+    console.log(
+        "ADMIN HANDLING WEBRTC SIGNAL:",
+        signal
+    );
+
+
+    const participantId =
+        signal.participantId;
+
+
+    if(!participantId){
+        return;
+    }
+
+
+    let peerConnection =
+        adminPeerConnections.get(
+            participantId
+        );
+
+
+    /*
+     * Participant's ICE candidate.
+     */
+
+    if(
+        signal.type ===
+        "ice-candidate"
+    ){
+
+        if(
+            peerConnection &&
+            signal.candidate
+        ){
+
+            try{
+
+                await peerConnection.addIceCandidate(
+                    signal.candidate
+                );
+
+            }catch(error){
+
+                console.error(
+                    "ADMIN ICE CANDIDATE ERROR:",
+                    error
+                );
+
+            }
+
+        }
+
+        return;
+    }
+
+
+    /*
+     * Participant's answer.
+     */
+
+    if(
+        signal.type ===
+        "answer"
+    ){
+
+        if(!peerConnection){
+
+            console.error(
+                "No administrator peer connection for:",
+                participantId
+            );
+
+            return;
+
+        }
+
+
+        await peerConnection.setRemoteDescription(
+            signal.answer
+        );
+
+
+        console.log(
+            "Administrator remote description set:",
+            participantId
+        );
+
+        return;
+
+    }
+
+}
+
+
+    
 /* =========================================================
    INITIALIZE
 ========================================================= */
@@ -2650,15 +3170,133 @@ function initializeApplication(){
 
 function initializeAdministrator(){
 
-    joinScreen.classList.add("hidden");
-    administratorView.style.display = "block";
-    participantView.style.display = "none";
-    toolbar.style.display = "flex";
-    administratorToolbar.style.display = "flex";
-    adminModeBadge.style.display = "none";
+    joinScreen.classList.add(
+        "hidden"
+    );
 
-    connectionStatus.textContent = "● Administrator";
-    connectionStatus.style.color = "#62ff62";
+    administratorView.style.display =
+        "block";
+
+    participantView.style.display =
+        "none";
+
+    toolbar.style.display =
+        "flex";
+
+    administratorToolbar.style.display =
+        "flex";
+
+    adminModeBadge.style.display =
+        "none";
+
+
+    connectionStatus.textContent =
+        "● Administrator";
+
+    connectionStatus.style.color =
+        "#62ff62";
+
+
+    /*
+     * Get administrator camera
+     * and microphone.
+     */
+
+    initializeAdministratorMedia();
+
+}
+
+/* =========================================================
+   ADMINISTRATOR MEDIA
+========================================================= */
+
+async function initializeAdministratorMedia(){
+
+    if(!isAdministrator){
+
+        return;
+
+    }
+
+
+    if(localStream){
+
+        console.log(
+            "Administrator local stream already exists."
+        );
+
+        return;
+
+    }
+
+
+    try{
+
+        localStream =
+            await navigator.mediaDevices.getUserMedia({
+
+                video:
+                    true,
+
+                audio:
+                    true
+
+            });
+
+
+        console.log(
+            "Administrator local media acquired:",
+            localStream
+        );
+
+
+        /*
+         * Set initial administrator
+         * media states.
+         */
+
+        const videoTracks =
+            localStream.getVideoTracks();
+
+        const audioTracks =
+            localStream.getAudioTracks();
+
+
+        if(videoTracks.length){
+
+            administratorCameraOn =
+                videoTracks[0].enabled;
+
+        }
+
+
+        if(audioTracks.length){
+
+            administratorMicOn =
+                audioTracks[0].enabled;
+
+        }
+
+
+    }catch(error){
+
+        console.error(
+            "ADMINISTRATOR MEDIA ERROR:",
+            error
+        );
+
+
+        if(connectionStatus){
+
+            connectionStatus.textContent =
+                "● Camera/microphone unavailable";
+
+            connectionStatus.style.color =
+                "#ff4444";
+
+        }
+
+    }
 
 }
 
@@ -3006,11 +3644,1067 @@ function subscribeToMyParticipant(participantId){
 }
 
 /* =========================================================
+   WEBRTC SIGNALING
+========================================================= */
+
+async function sendWebRTCSignal(
+    signal
+){
+
+    if(!webrtcSignalingChannel){
+
+        console.error(
+            "WebRTC signaling channel is not initialized."
+        );
+
+        return;
+
+    }
+
+
+    console.log(
+        "SENDING WEBRTC SIGNAL:",
+        signal
+    );
+
+
+    const result =
+        await webrtcSignalingChannel.send({
+
+            type:
+                "broadcast",
+
+            event:
+                "webrtc-signal",
+
+            payload:
+                signal
+
+        });
+
+
+    console.log(
+        "WEBRTC SIGNAL SENT:",
+        result
+    );
+
+}
+
+
+/* =========================================================
+   WEBRTC SIGNALING CHANNEL
+========================================================= */
+
+function initializeWebRTCSignaling(){
+
+    if(webrtcSignalingChannel){
+
+        return;
+
+    }
+
+
+    console.log(
+        "Initializing WebRTC signaling:",
+        ROOM_ID
+    );
+
+
+    webrtcSignalingChannel =
+        supabaseClient.channel(
+            "webrtc-room-" + ROOM_ID
+        );
+
+
+    webrtcSignalingChannel
+        .on(
+            "broadcast",
+            {
+                event:
+                    "webrtc-signal"
+            },
+            async function(payload){
+
+                console.log(
+                    "WEBRTC SIGNAL RECEIVED:",
+                    payload
+                );
+
+
+                const signal =
+                    payload.payload;
+
+
+                if(!signal){
+
+                    return;
+
+                }
+
+
+                /*
+                 * Ignore our own signals.
+                 */
+
+                if(
+                    signal.senderId ===
+                    window.myParticipantId
+                ){
+
+                    return;
+
+                }
+
+
+                /*
+                 * Participant receives
+                 * administrator signal.
+                 */
+
+                if(
+                    !isAdministrator &&
+                    signal.targetId ===
+                    window.myParticipantId
+                ){
+
+                    await handleParticipantWebRTCSignal(
+                        signal
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                 * Administrator receives
+                 * participant signal.
+                 */
+
+                if(
+                    isAdministrator &&
+                    signal.targetId ===
+                    "administrator"
+                ){
+
+                    await handleAdminWebRTCSignal(
+                        signal
+                    );
+
+                    return;
+
+                }
+
+            }
+        )
+        .subscribe(
+            function(status){
+
+                console.log(
+                    "WebRTC signaling status:",
+                    status
+                );
+
+            }
+        );
+
+}
+    
+/* =========================================================
+   PARTICIPANT WEBRTC
+========================================================= */
+
+async function startParticipantWebRTC(
+    participant
+){
+
+    console.log(
+        "Starting participant WebRTC:",
+        participant
+    );
+
+
+    if(isAdministrator){
+
+        console.log(
+            "Participant WebRTC function called on administrator. Ignoring."
+        );
+
+        return;
+
+    }
+
+
+    if(!localStream){
+
+        console.error(
+            "Cannot start WebRTC: localStream does not exist."
+        );
+
+        return;
+
+    }
+
+
+    if(
+        participantPeerConnection
+    ){
+
+        console.log(
+            "Participant peer connection already exists."
+        );
+
+        return;
+
+    }
+
+
+    participantPeerConnection =
+        new RTCPeerConnection(
+            rtcConfiguration
+        );
+
+
+    /*
+     * Send participant camera
+     * and microphone to administrator.
+     */
+
+    localStream
+        .getTracks()
+        .forEach(
+            track => {
+
+                participantPeerConnection.addTrack(
+                    track,
+                    localStream
+                );
+
+            }
+        );
+
+
+    /*
+     * Receive administrator media.
+     */
+
+    participantPeerConnection.ontrack =
+        function(event){
+
+            console.log(
+                "PARTICIPANT RECEIVED ADMIN TRACK:",
+                event
+            );
+
+
+            const remoteStream =
+                event.streams[0];
+
+
+            if(!remoteStream){
+                return;
+            }
+
+
+            attachAdministratorRemoteStream(
+                remoteStream
+            );
+
+        };
+
+
+    /*
+     * Send participant ICE candidates.
+     */
+
+    participantPeerConnection.onicecandidate =
+        async function(event){
+
+            if(!event.candidate){
+                return;
+            }
+
+
+            await sendWebRTCSignal({
+
+                type:
+                    "ice-candidate",
+
+                senderId:
+                    window.myParticipantId,
+
+                targetId:
+                    "administrator",
+
+                participantId:
+                    window.myParticipantId,
+
+                candidate:
+                    event.candidate
+
+            });
+
+        };
+
+
+    /*
+     * Monitor connection.
+     */
+
+    participantPeerConnection.onconnectionstatechange =
+        function(){
+
+            console.log(
+                "PARTICIPANT WEBRTC CONNECTION STATE:",
+                participantPeerConnection.connectionState
+            );
+
+
+            if(
+                participantPeerConnection.connectionState ===
+                "connected"
+            ){
+
+                console.log(
+                    "PARTICIPANT WEBRTC CONNECTED"
+                );
+
+
+                if(connectionStatus){
+
+                    connectionStatus.textContent =
+                        "● Connected";
+
+                    connectionStatus.style.color =
+                        "#62ff62";
+
+                }
+
+            }
+
+
+            if(
+                participantPeerConnection.connectionState ===
+                "failed"
+            ){
+
+                console.error(
+                    "PARTICIPANT WEBRTC CONNECTION FAILED"
+                );
+
+
+                if(connectionStatus){
+
+                    connectionStatus.textContent =
+                        "● Connection failed";
+
+                    connectionStatus.style.color =
+                        "#ff4444";
+
+                }
+
+            }
+
+        };
+
+
+    /*
+     * The participant does NOT create the
+     * initial offer.
+     *
+     * The administrator does that after
+     * receiving the participant.
+     */
+
+    console.log(
+        "Participant WebRTC ready and waiting for administrator offer."
+    );
+
+}
+    /* =========================================================
+   PARTICIPANT WEBRTC SIGNAL HANDLER
+========================================================= */
+
+async function handleParticipantWebRTCSignal(
+    signal
+){
+
+    console.log(
+        "PARTICIPANT HANDLING WEBRTC SIGNAL:",
+        signal
+    );
+
+
+    /*
+     * Administrator ICE candidate.
+     */
+
+    if(
+        signal.type ===
+        "ice-candidate"
+    ){
+
+        if(
+            participantPeerConnection &&
+            signal.candidate
+        ){
+
+            try{
+
+                await participantPeerConnection.addIceCandidate(
+                    signal.candidate
+                );
+
+            }catch(error){
+
+                console.error(
+                    "PARTICIPANT ICE CANDIDATE ERROR:",
+                    error
+                );
+
+            }
+
+        }
+
+        return;
+    }
+
+
+    /*
+     * Administrator's offer.
+     */
+
+    if(
+        signal.type ===
+        "offer"
+    ){
+
+        if(!participantPeerConnection){
+
+            console.error(
+                "Participant peer connection does not exist."
+            );
+
+            return;
+
+        }
+
+
+        await participantPeerConnection.setRemoteDescription(
+            signal.offer
+        );
+
+
+        console.log(
+            "Participant administrator offer accepted."
+        );
+
+
+        const answer =
+            await participantPeerConnection.createAnswer();
+
+
+        await participantPeerConnection.setLocalDescription(
+            answer
+        );
+
+
+        await sendWebRTCSignal({
+
+            type:
+                "answer",
+
+            senderId:
+                window.myParticipantId,
+
+            targetId:
+                "administrator",
+
+            participantId:
+                window.myParticipantId,
+
+            answer:
+                answer
+
+        });
+
+
+        console.log(
+            "Participant WebRTC answer sent."
+        );
+
+    }
+
+}
+
+/* =========================================================
+   ADMINISTRATOR WEBRTC CONNECTION
+========================================================= */
+
+async function createAdminPeerConnection(
+    participantId
+){
+
+    console.log(
+        "Creating administrator WebRTC connection:",
+        participantId
+    );
+
+
+    /*
+     * Prevent duplicate connections.
+     */
+
+    if(
+        adminPeerConnections.has(
+            participantId
+        )
+    ){
+
+        console.log(
+            "Administrator peer connection already exists:",
+            participantId
+        );
+
+        return adminPeerConnections.get(
+            participantId
+        );
+
+    }
+
+
+    const peerConnection =
+        new RTCPeerConnection(
+            rtcConfiguration
+        );
+
+
+    adminPeerConnections.set(
+        participantId,
+        peerConnection
+    );
+
+
+    /*
+     * Send administrator camera
+     * and microphone.
+     */
+
+    if(localStream){
+
+        localStream
+            .getTracks()
+            .forEach(
+                track => {
+
+                    peerConnection.addTrack(
+                        track,
+                        localStream
+                    );
+
+                }
+            );
+
+    }else{
+
+        console.warn(
+            "Administrator localStream does not exist."
+        );
+
+    }
+
+
+    /*
+     * Receive participant camera
+     * and microphone.
+     */
+
+    peerConnection.ontrack =
+        function(event){
+
+            console.log(
+                "ADMIN RECEIVED PARTICIPANT TRACK:",
+                participantId,
+                event
+            );
+
+
+            const remoteStream =
+                event.streams[0];
+
+
+            if(!remoteStream){
+
+                console.warn(
+                    "Participant remote stream unavailable:",
+                    participantId
+                );
+
+                return;
+
+            }
+
+
+            attachRemoteParticipantStream(
+                participantId,
+                remoteStream
+            );
+
+        };
+
+
+    /*
+     * Send administrator ICE candidates.
+     */
+
+    peerConnection.onicecandidate =
+        async function(event){
+
+            if(!event.candidate){
+
+                return;
+
+            }
+
+
+            await sendWebRTCSignal({
+
+                type:
+                    "ice-candidate",
+
+                senderId:
+                    "administrator",
+
+                targetId:
+                    participantId,
+
+                participantId:
+                    participantId,
+
+                candidate:
+                    event.candidate
+
+            });
+
+        };
+
+
+    /*
+     * Monitor connection state.
+     */
+
+    peerConnection.onconnectionstatechange =
+        function(){
+
+            console.log(
+                "ADMIN WEBRTC CONNECTION STATE:",
+                participantId,
+                peerConnection.connectionState
+            );
+
+
+            if(
+                peerConnection.connectionState ===
+                "connected"
+            ){
+
+                console.log(
+                    "WEBRTC CONNECTED TO PARTICIPANT:",
+                    participantId
+                );
+
+            }
+
+
+            if(
+                peerConnection.connectionState ===
+                "failed"
+            ){
+
+                console.error(
+                    "WEBRTC CONNECTION FAILED:",
+                    participantId
+                );
+
+            }
+
+        };
+
+
+    /*
+     * Administrator creates the offer.
+     */
+
+    const offer =
+        await peerConnection.createOffer();
+
+
+    await peerConnection.setLocalDescription(
+        offer
+    );
+
+
+    await sendWebRTCSignal({
+
+        type:
+            "offer",
+
+        senderId:
+            "administrator",
+
+        targetId:
+            participantId,
+
+        participantId:
+            participantId,
+
+        offer:
+            offer
+
+    });
+
+
+    console.log(
+        "Administrator WebRTC offer sent:",
+        participantId
+    );
+
+
+    return peerConnection;
+
+}
+
+/* =========================================================
+   ADMINISTRATOR WEBRTC SIGNAL HANDLER
+========================================================= */
+
+async function handleAdminWebRTCSignal(
+    signal
+){
+
+    console.log(
+        "ADMIN HANDLING WEBRTC SIGNAL:",
+        signal
+    );
+
+
+    const participantId =
+        signal.participantId;
+
+
+    if(!participantId){
+
+        console.warn(
+            "Administrator WebRTC signal has no participant ID."
+        );
+
+        return;
+
+    }
+
+
+    const peerConnection =
+        adminPeerConnections.get(
+            participantId
+        );
+
+
+    /*
+     * Participant ICE candidate.
+     */
+
+    if(
+        signal.type ===
+        "ice-candidate"
+    ){
+
+        if(
+            peerConnection &&
+            signal.candidate
+        ){
+
+            try{
+
+                await peerConnection.addIceCandidate(
+                    signal.candidate
+                );
+
+            }catch(error){
+
+                console.error(
+                    "ADMIN ICE CANDIDATE ERROR:",
+                    error
+                );
+
+            }
+
+        }
+
+        return;
+
+    }
+
+
+    /*
+     * Participant answer.
+     */
+
+    if(
+        signal.type ===
+        "answer"
+    ){
+
+        if(!peerConnection){
+
+            console.error(
+                "No administrator peer connection for:",
+                participantId
+            );
+
+            return;
+
+        }
+
+
+        await peerConnection.setRemoteDescription(
+            signal.answer
+        );
+
+
+        console.log(
+            "Administrator accepted participant answer:",
+            participantId
+        );
+
+    }
+
+}
+
+/* =========================================================
+   ADMIN RECEIVES PARTICIPANT VIDEO
+========================================================= */
+
+function attachRemoteParticipantStream(
+    participantId,
+    remoteStream
+){
+
+    console.log(
+        "Attaching participant WebRTC stream:",
+        participantId
+    );
+
+
+    const tile =
+        document.querySelector(
+            `.videoTile[data-participant-id="${participantId}"]`
+        );
+
+
+    if(!tile){
+
+        console.warn(
+            "Administrator video tile not found:",
+            participantId
+        );
+
+        return;
+
+    }
+
+
+    let video =
+        tile.querySelector(
+            ".remoteParticipantVideo"
+        );
+
+
+    if(!video){
+
+        video =
+            document.createElement(
+                "video"
+            );
+
+
+        video.className =
+            "remoteParticipantVideo";
+
+
+        video.autoplay =
+            true;
+
+
+        video.playsInline =
+            true;
+
+
+        video.style.width =
+            "100%";
+
+
+        video.style.height =
+            "100%";
+
+
+        video.style.objectFit =
+            "cover";
+
+
+        tile.appendChild(
+            video
+        );
+
+    }
+
+
+    video.srcObject =
+        remoteStream;
+
+
+    video.play().catch(
+        function(error){
+
+            console.warn(
+                "Participant video autoplay failed:",
+                error
+            );
+
+        }
+    );
+
+}
+
+/* =========================================================
+   PARTICIPANT RECEIVES ADMIN VIDEO
+========================================================= */
+
+function attachAdministratorRemoteStream(
+    remoteStream
+){
+
+    console.log(
+        "Attaching administrator WebRTC stream."
+    );
+
+
+    let video =
+        document.getElementById(
+            "administratorRemoteVideo"
+        );
+
+
+    if(!video){
+
+        video =
+            document.createElement(
+                "video"
+            );
+
+
+        video.id =
+            "administratorRemoteVideo";
+
+
+        video.autoplay =
+            true;
+
+
+        video.playsInline =
+            true;
+
+
+        video.style.width =
+            "100%";
+
+
+        video.style.height =
+            "100%";
+
+
+        video.style.objectFit =
+            "cover";
+
+
+        conferenceArea.appendChild(
+            video
+        );
+
+    }
+
+
+    video.srcObject =
+        remoteStream;
+
+
+    video.play().catch(
+        function(error){
+
+            console.warn(
+                "Administrator video autoplay failed:",
+                error
+            );
+
+        }
+    );
+
+}
+
+/* =========================================================
+   CLOSE ADMINISTRATOR WEBRTC CONNECTION
+========================================================= */
+
+function closeParticipantWebRTC(
+    participantId
+){
+
+    const peerConnection =
+        adminPeerConnections.get(
+            participantId
+        );
+
+
+    if(!peerConnection){
+
+        return;
+
+    }
+
+
+    console.log(
+        "Closing administrator WebRTC connection:",
+        participantId
+    );
+
+
+    peerConnection.close();
+
+
+    adminPeerConnections.delete(
+        participantId
+    );
+
+}
+
+/* =========================================================
    REMOVED BY ADMINISTRATOR
 ========================================================= */
 
 function showRemovedScreen(){
 
+    /*
+     * Close participant WebRTC connection.
+     */
+
+    if(participantPeerConnection){
+
+        participantPeerConnection.close();
+
+        participantPeerConnection =
+            null;
+
+    }
+    
     /*
        Stop local camera/microphone.
     */
@@ -3857,9 +5551,19 @@ async function allowParticipant(id){
        Put participant into a video tile.
     */
 
-    assignParticipantToTile(
-        participant
-    );
+assignParticipantToTile(
+    participant
+);
+
+
+/*
+ * Start WebRTC connection with
+ * this participant.
+ */
+
+createAdminPeerConnection(
+    participant.id
+);
 
 }
 
@@ -3892,6 +5596,14 @@ async function removeParticipant(id){
         participantControl.remove();
 
     }
+
+/*
+ * Close the WebRTC connection.
+ */
+
+closeParticipantWebRTC(
+    id
+);
 
     /*
      * Immediately clear the participant's
@@ -6514,7 +8226,7 @@ async function loadConferenceParticipants(){
 ========================================================= */
 
 initializeChat();
-
+initializeWebRTCSignaling();
 initializeApplication();
 
 
