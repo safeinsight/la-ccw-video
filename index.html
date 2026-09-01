@@ -3793,6 +3793,11 @@ function initializeWebRTCSignaling(){
                     window.myParticipantId
                 ){
 
+                    console.log(
+    "ADMINISTRATOR RECEIVED PARTICIPANT SIGNAL:",
+    signal
+);
+                    
                     await handleParticipantWebRTCSignal(
                         signal
                     );
