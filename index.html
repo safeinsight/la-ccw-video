@@ -2854,16 +2854,40 @@ async function createAdminPeerConnection(
     }
 
 
-    const peerConnection =
-        new RTCPeerConnection(
-            rtcConfiguration
-        );
-
-
-    adminPeerConnections.set(
-        participantId,
-        peerConnection
+const peerConnection =
+    new RTCPeerConnection(
+        rtcConfiguration
     );
+
+
+adminPeerConnections.set(
+    participantId,
+    peerConnection
+);
+
+
+/*
+ * Tell WebRTC that the administrator
+ * wants to RECEIVE participant video
+ * and audio.
+ *
+ * The administrator does NOT send
+ * media to the participant.
+ */
+
+peerConnection.addTransceiver(
+    "video",
+    {
+        direction: "recvonly"
+    }
+);
+
+peerConnection.addTransceiver(
+    "audio",
+    {
+        direction: "recvonly"
+    }
+);
 
 
     /*
@@ -4084,6 +4108,11 @@ if(
     signal.type ===
     "offer"
 ){
+
+console.log(
+    "PARTICIPANT RECEIVED ADMINISTRATOR OFFER:",
+    signal
+);
 
 if(!participantPeerConnection){
 
