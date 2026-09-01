@@ -3536,11 +3536,80 @@ async function startParticipantWebRTC(
 async function handleParticipantWebRTCSignal(
     signal
 ){
-
+    
     console.log(
         "PARTICIPANT HANDLING WEBRTC SIGNAL:",
         signal
     );
+
+    /*
+     * Administrator media control.
+     */
+
+    if(
+        signal.type ===
+        "participant-media-control"
+    ){
+
+        if(!localStream){
+
+            console.warn(
+                "Participant media control received, but localStream does not exist."
+            );
+
+            return;
+
+        }
+
+        if(
+            signal.media ===
+            "camera"
+        ){
+
+            localStream
+                .getVideoTracks()
+                .forEach(
+                    track => {
+
+                        track.enabled =
+                            signal.enabled;
+
+                    }
+                );
+
+            console.log(
+                "PARTICIPANT CAMERA CONTROL:",
+                signal.enabled
+            );
+
+        }
+
+
+        if(
+            signal.media ===
+            "microphone"
+        ){
+
+            localStream
+                .getAudioTracks()
+                .forEach(
+                    track => {
+
+                        track.enabled =
+                            signal.enabled;
+
+                    }
+                );
+
+            console.log(
+                "PARTICIPANT MICROPHONE CONTROL:",
+                signal.enabled
+            );
+
+        }
+
+        return;
+    }
 
 
     /*
@@ -5937,7 +6006,7 @@ function renderParticipants(){
    PARTICIPANT CAMERA
 ========================================================= */
 
-function toggleParticipantCamera(id){
+async function toggleParticipantCamera(id){
 
     const participant =
         participants.find(
@@ -5947,16 +6016,32 @@ function toggleParticipantCamera(id){
     if(!participant){
 
         return;
-
     }
 
     participant.cameraOn =
         !participant.cameraOn;
 
+    await sendWebRTCSignal({
 
-    updateParticipantTile(
-        participant
-    );
+        type:
+            "participant-media-control",
+
+        senderId:
+            "administrator",
+
+        targetId:
+            id,
+
+        participantId:
+            id,
+
+        media:
+            "camera",
+
+        enabled:
+            participant.cameraOn
+
+    });
 
     renderParticipants();
 
@@ -5967,7 +6052,7 @@ function toggleParticipantCamera(id){
    PARTICIPANT MIC
 ========================================================= */
 
-function toggleParticipantMic(id){
+async function toggleParticipantMic(id){
 
     const participant =
         participants.find(
@@ -5977,27 +6062,41 @@ function toggleParticipantMic(id){
     if(!participant){
 
         return;
-
     }
 
     /*
-       Locked microphone cannot be changed
-       by participant, but administrator can
-       always change it.
-    */
+     * Administrator can always
+     * change the participant microphone.
+     */
 
     participant.micOn =
         !participant.micOn;
 
+    await sendWebRTCSignal({
 
-    updateParticipantTile(
-        participant
-    );
+        type:
+            "participant-media-control",
+
+        senderId:
+            "administrator",
+
+        targetId:
+            id,
+
+        participantId:
+            id,
+
+        media:
+            "microphone",
+
+        enabled:
+            participant.micOn
+
+    });
 
     renderParticipants();
 
 }
-
 
 /* =========================================================
    LOCK MICROPHONE
