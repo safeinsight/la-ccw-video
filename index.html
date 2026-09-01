@@ -1405,11 +1405,12 @@ input {
 @media (max-width:600px) {
 
     #administratorToolbar {
-        display:grid;
+        display:grid !important;
         grid-template-columns:repeat(3, 1fr);
         grid-template-rows:repeat(2, 1fr);
         gap:4px;
         width:100%;
+        height:100%;
     }
 
     #administratorToolbar .toolbarButton {
@@ -1420,10 +1421,46 @@ input {
         font-size:12px;
     }
 
+    #toolbar {
+    min-height:110px;
+    height:110px;
+    padding:6px 8px;
+}
+
     #adminChatPanel {
         top:50px;
         bottom:58px;
         width:100%;
+    }
+
+    #adminChatButton {
+        grid-column:1;
+        grid-row:1;
+    }
+
+    #adminLmsLoginButton {
+        grid-column:2;
+        grid-row:1;
+    }
+
+    #adminPanelButton {
+        grid-column:3;
+        grid-row:1;
+    }
+
+    #adminCameraButton {
+        grid-column:1;
+        grid-row:2;
+    }
+
+    #leaveButton {
+        grid-column:2;
+        grid-row:2;
+    }
+
+    #micButton {
+        grid-column:3;
+        grid-row:2;
     }
 
 }
