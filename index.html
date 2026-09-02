@@ -6927,7 +6927,20 @@ function updateParticipantTileStatus(
             participant.micOn
             ? "Mute"
             : "Unmute";
+    }
 
+        /*
+     * Update administrator microphone lock button
+     * based on current microphone status.
+     */
+    
+    if(adminButtons.length >= 3){
+    
+        adminButtons[2].textContent =
+            participant.micOn
+            ? "Lock Mic"
+            : "Unlock Mic";
+    
     }
 
 }
