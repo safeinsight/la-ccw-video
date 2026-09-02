@@ -6076,17 +6076,12 @@ function renderParticipants(){
                     </button>
 
                     <button
-                        class="${
-                            participant.micLocked
-                            ? "🔇 LOCKED"
-                            : ""
-                        }"
                         onclick="toggleMicLock('${participant.id}')"
                     >
                         ${
-                            participant.micLocked
-                            ? "Unlock Mic"
-                            : "🔒 Lock Mic"
+                            participant.micOn
+                            ? "🔒 Lock Mic"
+                            : "Unlock Mic"
                         }
                     </button>
 
@@ -6938,7 +6933,7 @@ function updateParticipantTileStatus(
     
         adminButtons[2].textContent =
             participant.micOn
-            ? "Lock Mic"
+            ? "🔒 Lock Mic"
             : "Unlock Mic";
     
     }
