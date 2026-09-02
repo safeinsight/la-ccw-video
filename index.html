@@ -6867,6 +6867,24 @@ function updateParticipantTileStatus(
 
     }
 
+    /*
+ * Update administrator microphone lock button.
+ */
+
+if(adminButtons.length >= 3){
+
+    adminButtons[2].textContent =
+        participant.micLocked
+        ? "Unlock Mic"
+        : "🔒 Lock Mic";
+
+    adminButtons[2].classList.toggle(
+        "locked",
+        participant.micLocked
+    );
+
+}
+
 }
 
 /* =========================================================
