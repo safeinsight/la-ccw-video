@@ -3006,14 +3006,24 @@ micButtonParticipant.classList.remove(
            We will need this later for WebRTC.
         */
 
-        window.myParticipantId =
-            data.id;
+window.myParticipantId =
+    data.id;
 
+/*
+ * Create the participant WebRTC
+ * peer connection now, while we
+ * are waiting for administrator
+ * approval.
+ */
 
-        console.log(
-            "Knock successful:",
-            data
-        );
+startParticipantWebRTC(
+    data
+);
+
+console.log(
+    "Knock successful:",
+    data
+);
 
 
         /*
@@ -3760,26 +3770,30 @@ if(
     return;
 }
 
-try{
 
-    await participantPeerConnection.addIceCandidate(
-        signal.candidate
-    );
+    try{
 
-    console.log(
-        "Participant ICE candidate added."
-    );
+        await participantPeerConnection.addIceCandidate(
+            signal.candidate
+        );
 
-}catch(error){
 
-    console.error(
-        "PARTICIPANT ICE CANDIDATE ERROR:",
-        error
-    );
+        console.log(
+            "Participant ICE candidate added."
+        );
 
-}
 
-return;
+    }catch(error){
+
+        console.error(
+            "PARTICIPANT ICE CANDIDATE ERROR:",
+            error
+        );
+
+    }
+
+
+    return;
 }
 
 
@@ -3808,14 +3822,13 @@ if(!participantPeerConnection){
 }
 
 
-        await participantPeerConnection.setRemoteDescription(
-            signal.offer
-        );
+await participantPeerConnection.setRemoteDescription(
+    signal.offer
+);
 
-
-        console.log(
-            "Participant administrator offer accepted."
-        );
+console.log(
+    "Participant administrator offer accepted."
+);
 
 /*
  * Add any ICE candidates that arrived
@@ -3862,8 +3875,8 @@ if(
 
 }
 
-        const answer =
-            await participantPeerConnection.createAnswer();
+const answer =
+    await participantPeerConnection.createAnswer();
 
 
         await participantPeerConnection.setLocalDescription(
