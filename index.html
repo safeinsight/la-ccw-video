@@ -6791,9 +6791,9 @@ if(participant.cameraOn){
                 onclick="toggleMicLock('${participant.id}')"
             >
                 ${
-                    participant.micLocked
-                    ? "Unlock"
-                    : "🔒 Lock Mic"
+                    participant.micOn
+                    ? "🔒 Lock Mic"
+                    : "Unlock Mic"
                 }
             </button>
 
