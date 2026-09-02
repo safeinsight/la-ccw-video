@@ -6735,6 +6735,23 @@ function updateParticipantTileStatus(
 
     }
 
+        /*
+     * Update participant video display.
+     */
+
+    const participantVideo =
+        tile.querySelector(
+            ".participantRemoteVideo"
+        );
+
+    if(participantVideo){
+
+        participantVideo.style.display =
+            participant.cameraOn
+            ? "block"
+            : "none";
+
+    }
 
     /*
      * Update administrator camera button.
