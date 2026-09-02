@@ -2240,8 +2240,6 @@ let isAdministrator = false;
 
 let localStream = null;
 
-let participantMicLocked = false;
-
 let administratorCameraOn = false;
 
 let administratorMicOn = false;
@@ -3103,44 +3101,6 @@ function subscribeToMyParticipant(participantId){
                     const participant =
                         payload.new;
 
-                   participantMicLocked =
-                    participant.mic_locked === true; 
-
-                    if(participantMicLocked){
-
-                    micButtonParticipant.textContent =
-                        "LOCKED";
-                
-                    micButtonParticipant.classList.remove(
-                        "active"
-                    );
-
-                        } else {
-
-        const audioTracks =
-            localStream
-            ? localStream.getAudioTracks()
-            : [];
-
-        const micOn =
-            audioTracks.length
-            ? audioTracks[0].enabled
-            : false;
-
-        micButtonParticipant.textContent =
-            micOn
-            ? "🎤 Mic ON"
-            : "🔇 Mic OFF";
-
-        micButtonParticipant.classList.toggle(
-            "active",
-            micOn
-        );
-
-    }
-
-}
-
                     if(
                         participant.status ===
                         "approved"
@@ -3680,20 +3640,16 @@ if(
     );
 
 
-micButtonParticipant.textContent =
-    participantMicLocked
-    ? "LOCKED"
-    : (
+    micButtonParticipant.textContent =
         signal.enabled
         ? "🎤 Mic ON"
-        : "🔇 Mic OFF"
-    );
+        : "🔇 Mic OFF";
 
-micButtonParticipant.classList.toggle(
-    "active",
-    !participantMicLocked &&
-    signal.enabled
-);
+
+    micButtonParticipant.classList.toggle(
+        "active",
+        signal.enabled
+    );
 
 
     console.log(
@@ -5084,7 +5040,7 @@ if(openAdminChatThread === String(participant.id)){
 
         renderParticipants();
 
-        updateParticipantTileStatus(
+        assignParticipantToTile(
             updatedParticipant
         );
 
@@ -6220,7 +6176,9 @@ function toggleMicLock(id){
         );
 
     if(!participant){
+
         return;
+
     }
 
 
@@ -6240,87 +6198,9 @@ function toggleMicLock(id){
     }
 
 
-    /*
-       Tell the participant to change
-       their actual microphone state.
-    */
-
-    sendWebRTCSignal({
-
-        type:
-            "participant-media-control",
-
-        senderId:
-            "administrator",
-
-        targetId:
-            id,
-
-        participantId:
-            id,
-
-        media:
-            "microphone",
-
-        enabled:
-            participant.micOn
-
-    });
-
-
-    /*
-       Save microphone lock state to Supabase.
-    */
-
-    supabaseClient
-        .from(
-            "conference_participants"
-        )
-        .update({
-
-            mic_locked:
-                participant.micLocked,
-
-            mic_on:
-                participant.micOn,
-
-            updated_at:
-                new Date().toISOString()
-
-        })
-        .eq(
-            "id",
-            id
-        )
-        .then(
-            function(result){
-
-                if(result.error){
-
-                    console.error(
-                        "MIC LOCK UPDATE ERROR:",
-                        result.error
-                    );
-
-                }
-
-            }
-        );
-
-
-    /*
-       Update the existing tile without
-       destroying the WebRTC video element.
-    */
-
-    updateParticipantTileStatus(
+    updateParticipantTile(
         participant
     );
-
-
-    /*
-       Refresh administrator panel.
-    */
 
     renderParticipants();
 
@@ -6855,23 +6735,6 @@ function updateParticipantTileStatus(
 
     }
 
-        /*
-     * Update participant video display.
-     */
-
-    const participantVideo =
-        tile.querySelector(
-            ".participantRemoteVideo"
-        );
-
-    if(participantVideo){
-
-        participantVideo.style.display =
-            participant.cameraOn
-            ? "block"
-            : "none";
-
-    }
 
     /*
      * Update administrator camera button.
@@ -6905,24 +6768,6 @@ function updateParticipantTileStatus(
             : "Unmute";
 
     }
-
-    /*
- * Update administrator microphone lock button.
- */
-
-if(adminButtons.length >= 3){
-
-    adminButtons[2].textContent =
-        participant.micLocked
-        ? "Unlock Mic"
-        : "🔒 Lock Mic";
-
-    adminButtons[2].classList.toggle(
-        "locked",
-        participant.micLocked
-    );
-
-}
 
 }
 
@@ -7818,10 +7663,6 @@ participantChatInput.addEventListener("keydown", function(event){ if(event.key =
 micButtonParticipant.addEventListener(
     "click",
     async function(){
-
-        if(participantMicLocked){
-            return;
-        }
 
         if(!localStream){
             return;
