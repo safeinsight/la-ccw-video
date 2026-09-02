@@ -3744,46 +3744,42 @@ if(
      * does not exist yet, save the candidate.
      */
 
-    if(!participantPeerConnection){
+if(
+    !participantPeerConnection ||
+    !participantPeerConnection.remoteDescription
+){
 
-        pendingParticipantIceCandidates.push(
-            signal.candidate
-        );
+    pendingParticipantIceCandidates.push(
+        signal.candidate
+    );
 
-
-        console.log(
-            "Queued participant ICE candidate."
-        );
-
-
-        return;
-
-    }
-
-
-    try{
-
-        await participantPeerConnection.addIceCandidate(
-            signal.candidate
-        );
-
-
-        console.log(
-            "Participant ICE candidate added."
-        );
-
-
-    }catch(error){
-
-        console.error(
-            "PARTICIPANT ICE CANDIDATE ERROR:",
-            error
-        );
-
-    }
-
+    console.log(
+        "Queued participant ICE candidate until administrator offer is accepted."
+    );
 
     return;
+}
+
+try{
+
+    await participantPeerConnection.addIceCandidate(
+        signal.candidate
+    );
+
+    console.log(
+        "Participant ICE candidate added."
+    );
+
+}catch(error){
+
+    console.error(
+        "PARTICIPANT ICE CANDIDATE ERROR:",
+        error
+    );
+
+}
+
+return;
 }
 
 
@@ -3821,6 +3817,50 @@ if(!participantPeerConnection){
             "Participant administrator offer accepted."
         );
 
+/*
+ * Add any ICE candidates that arrived
+ * before the administrator offer.
+ */
+
+if(
+    pendingParticipantIceCandidates.length
+){
+
+    console.log(
+        "Adding queued participant ICE candidates:",
+        pendingParticipantIceCandidates.length
+    );
+
+    for(
+        const candidate
+        of pendingParticipantIceCandidates
+    ){
+
+        try{
+
+            await participantPeerConnection.addIceCandidate(
+                candidate
+            );
+
+            console.log(
+                "Queued participant ICE candidate added."
+            );
+
+        }catch(error){
+
+            console.error(
+                "QUEUED PARTICIPANT ICE ERROR:",
+                error
+            );
+
+        }
+
+    }
+
+    pendingParticipantIceCandidates =
+        [];
+
+}
 
         const answer =
             await participantPeerConnection.createAnswer();
