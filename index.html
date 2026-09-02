@@ -3101,32 +3101,32 @@ function subscribeToMyParticipant(participantId){
                     const participant =
                         payload.new;
 
-                    if(
-                        participant.status ===
-                        "approved"
-                    ){
+if(
+    participant.status ===
+    "approved" &&
+    participantView.style.display !== "flex"
+){
 
-                        console.log(
-                            "ENTRY APPROVED"
-                        );
+    console.log(
+        "ENTRY APPROVED"
+    );
 
-                        enterConference(
-                            participant
-                        );
+    enterConference(
+        participant
+    );
 
-                        /*
-                         * Start the actual WebRTC
-                         * connection here.
-                         *
-                         * We will add the WebRTC
-                         * function next.
-                         */
-                        startParticipantWebRTC(
-                            participant
-                        );
+    /*
+     * Start the actual WebRTC
+     * connection here.
+     *
+     * We will add the WebRTC
+     * function next.
+     */
+    startParticipantWebRTC(
+        participant
+    );
 
-                    }
-
+}
                     if(
                         participant.status ===
                         "denied"
@@ -3335,6 +3335,8 @@ if(
             }
         )
         .subscribe(
+
+            
             function(status){
 
                 console.log(
