@@ -1822,17 +1822,15 @@ input {
                 <div class="tileStatus">
 
                     <div
-                        class="statusIcon"
+                        class="statusIcon off"
                         id="adminMicStatus"
                     >
-                        🎤
                     </div>
 
                     <div
-                        class="statusIcon"
+                        class="statusIcon off"
                         id="adminCameraStatus"
                     >
-                        📹
                     </div>
 
                 </div>
@@ -2790,21 +2788,21 @@ async function initializeAdministratorMedia(){
             localStream.getAudioTracks();
 
 
-        if(videoTracks.length){
+if(videoTracks.length){
+    videoTracks[0].enabled = false;
+    administratorCameraOn = false;
+}
 
-            administratorCameraOn =
-                videoTracks[0].enabled;
+if(audioTracks.length){
+    audioTracks[0].enabled = false;
+    administratorMicOn = false;
+}
 
-        }
+updateAdminCameraButton("Camera OFF");
+updateAdministratorCameraStatus();
 
-
-        if(audioTracks.length){
-
-            administratorMicOn =
-                audioTracks[0].enabled;
-
-        }
-
+updateAdministratorMicButton();
+updateAdministratorMicStatus();
 
     }catch(error){
 
