@@ -3115,6 +3115,30 @@ function subscribeToMyParticipant(participantId){
                         "active"
                     );
 
+                        } else {
+
+        const audioTracks =
+            localStream
+            ? localStream.getAudioTracks()
+            : [];
+
+        const micOn =
+            audioTracks.length
+            ? audioTracks[0].enabled
+            : false;
+
+        micButtonParticipant.textContent =
+            micOn
+            ? "🎤 Mic ON"
+            : "🔇 Mic OFF";
+
+        micButtonParticipant.classList.toggle(
+            "active",
+            micOn
+        );
+
+    }
+
 }
 
                     if(
@@ -3656,16 +3680,20 @@ if(
     );
 
 
-    micButtonParticipant.textContent =
+micButtonParticipant.textContent =
+    participantMicLocked
+    ? "LOCKED"
+    : (
         signal.enabled
         ? "🎤 Mic ON"
-        : "🔇 Mic OFF";
-
-
-    micButtonParticipant.classList.toggle(
-        "active",
-        signal.enabled
+        : "🔇 Mic OFF"
     );
+
+micButtonParticipant.classList.toggle(
+    "active",
+    !participantMicLocked &&
+    signal.enabled
+);
 
 
     console.log(
