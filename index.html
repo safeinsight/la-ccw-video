@@ -3615,6 +3615,60 @@ if(
     "microphone"
 ){
 
+    /*
+     * LOCKED microphone:
+     * Always force the participant's
+     * microphone OFF and show LOCKED.
+     */
+
+    if(signal.locked){
+
+        if(localStream){
+
+            localStream
+                .getAudioTracks()
+                .forEach(
+                    track => {
+
+                        track.enabled =
+                            false;
+
+                    }
+                );
+
+        }
+
+
+        micButtonParticipant.textContent =
+            "LOCKED";
+
+        micButtonParticipant.classList.remove(
+            "active"
+        );
+
+
+        console.log(
+            "PARTICIPANT MICROPHONE LOCKED"
+        );
+
+        return;
+    }
+
+
+    /*
+     * Normal microphone control.
+     */
+
+    if(!localStream){
+
+        console.warn(
+            "Participant microphone control received, but localStream does not exist."
+        );
+
+        return;
+    }
+
+
     const audioTracks =
         localStream.getAudioTracks();
 
@@ -3626,7 +3680,6 @@ if(
         );
 
         return;
-
     }
 
 
@@ -3640,28 +3693,16 @@ if(
     );
 
 
-if(signal.locked){
-
-    micButtonParticipant.textContent =
-        "LOCKED";
-
-    micButtonParticipant.classList.remove(
-        "active"
-    );
-
-}else{
-
     micButtonParticipant.textContent =
         signal.enabled
         ? "🎤 Mic ON"
         : "🔇 Mic OFF";
 
+
     micButtonParticipant.classList.toggle(
         "active",
         signal.enabled
     );
-
-}
 
 
     console.log(
