@@ -2282,6 +2282,14 @@ const adminPeerConnections =
 let participantPeerConnection =
     null;
 
+let mirrorPeerConnection =
+    null;
+
+let pendingMirrorIceCandidates =
+    [];
+    
+let mirrorCameraOn =
+    true;
 
 /*
  * Supabase WebRTC signaling channel.
@@ -2848,6 +2856,44 @@ function initializeParticipantMirror(){
     connectionStatus.style.color =
         "#62ff62";
 
+    /*
+     * Load the participant's current camera state
+     * and establish a receive-only mirror connection.
+     */
+    if(mirrorParticipantId){
+
+        supabaseClient
+            .from("conference_participants")
+            .select("camera_on")
+            .eq("id", mirrorParticipantId)
+            .single()
+            .then(function(result){
+
+                if(!result.error && result.data){
+
+                    mirrorCameraOn =
+                        result.data.camera_on !== false;
+
+                    cameraButtonParticipant.textContent =
+                        mirrorCameraOn
+                        ? "📹 Camera ON"
+                        : "📹 Camera OFF";
+
+                    cameraButtonParticipant.classList.toggle(
+                        "active",
+                        mirrorCameraOn
+                    );
+
+                }
+
+            });
+
+        startParticipantMirrorWebRTC(
+            mirrorParticipantId
+        );
+
+    }
+
 }
 
 /* =========================================================
@@ -3291,6 +3337,58 @@ function initializeWebRTCSignaling(){
 
                 }
 
+    /*
+ * Participant receives
+ * mirror WebRTC signal.
+ */
+if(
+    !isAdministrator &&
+    signal.targetId ===
+    window.myParticipantId &&
+    (
+        signal.type === "mirror-offer" ||
+        signal.type === "mirror-ice-candidate"
+    )
+){
+
+    console.log(
+        "PARTICIPANT RECEIVED MIRROR SIGNAL:",
+        signal
+    );
+
+    await handleParticipantMirrorWebRTCSignal(
+        signal
+    );
+
+    return;
+}
+
+
+/*
+ * Mirror receives
+ * participant WebRTC signal.
+ */
+if(
+    isMirror &&
+    signal.targetId ===
+    "mirror-" + mirrorParticipantId &&
+    (
+        signal.type === "mirror-answer" ||
+        signal.type === "mirror-ice-candidate"
+    )
+){
+
+    console.log(
+        "MIRROR RECEIVED PARTICIPANT SIGNAL:",
+        signal
+    );
+
+    await handleMirrorWebRTCSignal(
+        signal
+    );
+
+    return;
+}
 
                 /*
                  * Participant receives
@@ -3542,6 +3640,464 @@ async function startParticipantWebRTC(
     );
 
 }
+
+/* =========================================================
+   PARTICIPANT MIRROR WEBRTC
+========================================================= */
+
+async function startParticipantMirrorWebRTC(
+    participantId
+){
+
+    if(!isMirror){
+        return;
+    }
+
+    if(!participantId){
+        return;
+    }
+
+    if(mirrorPeerConnection){
+        return;
+    }
+
+    console.log(
+        "Starting participant mirror WebRTC:",
+        participantId
+    );
+
+    mirrorPeerConnection =
+        new RTCPeerConnection(
+            rtcConfiguration
+        );
+
+    /*
+     * Receive participant video/audio only.
+     */
+    const videoTransceiver =
+        mirrorPeerConnection.addTransceiver(
+            "video",
+            {
+                direction: "recvonly"
+            }
+        );
+
+    const audioTransceiver =
+        mirrorPeerConnection.addTransceiver(
+            "audio",
+            {
+                direction: "recvonly"
+            }
+        );
+
+    /*
+     * Receive the participant's media stream.
+     */
+    mirrorPeerConnection.ontrack =
+        function(event){
+
+            console.log(
+                "MIRROR RECEIVED PARTICIPANT TRACK:",
+                event.track.kind
+            );
+
+            let remoteStream =
+                participantLocalVideo.srcObject;
+
+            if(!remoteStream){
+                remoteStream =
+                    new MediaStream();
+
+                participantLocalVideo.srcObject =
+                    remoteStream;
+            }
+
+            if(
+                !remoteStream
+                    .getTracks()
+                    .some(
+                        track =>
+                            track.id ===
+                            event.track.id
+                    )
+            ){
+                remoteStream.addTrack(
+                    event.track
+                );
+            }
+
+            participantLocalVideo.style.display =
+                "block";
+
+            participantVideoPlaceholder.style.display =
+                "none";
+
+            participantLocalVideo
+                .play()
+                .catch(function(error){
+
+                    if(error.name !== "AbortError"){
+
+                        console.error(
+                            "MIRROR VIDEO PLAY ERROR:",
+                            error
+                        );
+
+                    }
+
+                });
+
+        };
+
+    /*
+     * Send mirror ICE candidates
+     * back to the participant.
+     */
+    mirrorPeerConnection.onicecandidate =
+        async function(event){
+
+            if(!event.candidate){
+                return;
+            }
+
+            await sendWebRTCSignal({
+
+                type:
+                    "mirror-ice-candidate",
+
+                senderId:
+                    "mirror-" + participantId,
+
+                targetId:
+                    participantId,
+
+                participantId:
+                    participantId,
+
+                candidate:
+                    event.candidate
+
+            });
+
+        };
+
+    mirrorPeerConnection.onconnectionstatechange =
+        function(){
+
+            console.log(
+                "MIRROR WEBRTC CONNECTION STATE:",
+                mirrorPeerConnection.connectionState
+            );
+
+        };
+
+    /*
+     * Create the mirror offer.
+     */
+    const offer =
+        await mirrorPeerConnection.createOffer();
+
+    await mirrorPeerConnection.setLocalDescription(
+        offer
+    );
+
+    await sendWebRTCSignal({
+
+        type:
+            "mirror-offer",
+
+        senderId:
+            "mirror-" + participantId,
+
+        targetId:
+            participantId,
+
+        participantId:
+            participantId,
+
+        offer:
+            offer
+
+    });
+
+    console.log(
+        "Mirror WebRTC offer sent:",
+        participantId
+    );
+
+}
+
+/* =========================================================
+   PARTICIPANT MIRROR WEBRTC SIGNAL HANDLER
+========================================================= */
+
+async function handleParticipantMirrorWebRTCSignal(
+    signal
+){
+
+    /*
+     * Mirror offer.
+     */
+    if(
+        signal.type ===
+        "mirror-offer"
+    ){
+
+        console.log(
+            "PARTICIPANT RECEIVED MIRROR OFFER:",
+            signal
+        );
+
+        if(!localStream){
+
+            console.error(
+                "Cannot create mirror connection: localStream does not exist."
+            );
+
+            return;
+        }
+
+        if(mirrorPeerConnection){
+
+            mirrorPeerConnection.close();
+
+        }
+
+        mirrorPeerConnection =
+            new RTCPeerConnection(
+                rtcConfiguration
+            );
+
+        /*
+         * Send the participant's existing
+         * camera and microphone tracks
+         * to the mirror.
+         */
+        localStream
+            .getTracks()
+            .forEach(
+                track => {
+
+                    mirrorPeerConnection.addTrack(
+                        track,
+                        localStream
+                    );
+
+                }
+            );
+
+        mirrorPeerConnection.onicecandidate =
+            async function(event){
+
+                if(!event.candidate){
+                    return;
+                }
+
+                await sendWebRTCSignal({
+
+                    type:
+                        "mirror-ice-candidate",
+
+                    senderId:
+                        window.myParticipantId,
+
+                    targetId:
+                        signal.senderId,
+
+                    participantId:
+                        window.myParticipantId,
+
+                    candidate:
+                        event.candidate
+
+                });
+
+            };
+
+        await mirrorPeerConnection.setRemoteDescription(
+            signal.offer
+        );
+
+        /*
+         * Add ICE candidates that arrived
+         * before the mirror offer.
+         */
+        for(
+            const candidate
+            of pendingMirrorIceCandidates
+        ){
+
+            try{
+
+                await mirrorPeerConnection.addIceCandidate(
+                    candidate
+                );
+
+            }catch(error){
+
+                console.error(
+                    "MIRROR QUEUED ICE ERROR:",
+                    error
+                );
+
+            }
+
+        }
+
+        pendingMirrorIceCandidates =
+            [];
+
+        const answer =
+            await mirrorPeerConnection.createAnswer();
+
+        await mirrorPeerConnection.setLocalDescription(
+            answer
+        );
+
+        await sendWebRTCSignal({
+
+            type:
+                "mirror-answer",
+
+            senderId:
+                window.myParticipantId,
+
+            targetId:
+                signal.senderId,
+
+            participantId:
+                window.myParticipantId,
+
+            answer:
+                answer
+
+        });
+
+        console.log(
+            "Participant mirror answer sent."
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Mirror ICE candidate.
+     */
+    if(
+        signal.type ===
+        "mirror-ice-candidate"
+    ){
+
+        if(!mirrorPeerConnection){
+
+            pendingMirrorIceCandidates.push(
+                signal.candidate
+            );
+
+            return;
+
+        }
+
+        if(
+            !mirrorPeerConnection.remoteDescription
+        ){
+
+            pendingMirrorIceCandidates.push(
+                signal.candidate
+            );
+
+            return;
+
+        }
+
+        try{
+
+            await mirrorPeerConnection.addIceCandidate(
+                signal.candidate
+            );
+
+        }catch(error){
+
+            console.error(
+                "PARTICIPANT MIRROR ICE ERROR:",
+                error
+            );
+
+        }
+
+    }
+
+}
+
+async function handleMirrorWebRTCSignal(
+    signal
+){
+
+    if(!mirrorPeerConnection){
+        return;
+    }
+
+    /*
+     * Participant's answer.
+     */
+    if(
+        signal.type ===
+        "mirror-answer"
+    ){
+
+        await mirrorPeerConnection.setRemoteDescription(
+            signal.answer
+        );
+
+        console.log(
+            "Mirror accepted participant answer."
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Participant ICE candidate.
+     */
+    if(
+        signal.type ===
+        "mirror-ice-candidate"
+    ){
+
+        if(
+            !mirrorPeerConnection.remoteDescription
+        ){
+
+            pendingMirrorIceCandidates.push(
+                signal.candidate
+            );
+
+            return;
+
+        }
+
+        try{
+
+            await mirrorPeerConnection.addIceCandidate(
+                signal.candidate
+            );
+
+        }catch(error){
+
+            console.error(
+                "MIRROR ICE ERROR:",
+                error
+            );
+
+        }
+
+    }
+
+}
     
 /* =========================================================
    PARTICIPANT WEBRTC SIGNAL HANDLER
@@ -3615,6 +4171,23 @@ if(
         signal.enabled
     );
 
+if(window.myParticipantId){
+
+    await supabaseClient
+        .from("conference_participants")
+        .update({
+            camera_on:
+                signal.enabled,
+
+            updated_at:
+                new Date().toISOString()
+        })
+        .eq(
+            "id",
+            window.myParticipantId
+        );
+
+}
 
     console.log(
         "PARTICIPANT CAMERA CONTROL:",
@@ -7965,6 +8538,62 @@ micButtonParticipant.addEventListener(
 cameraButtonParticipant.addEventListener(
     "click",
     async function(){
+
+        if(isMirror){
+
+            mirrorCameraOn =
+                !mirrorCameraOn;
+
+            await sendWebRTCSignal({
+
+                type:
+                    "participant-media-control",
+
+                senderId:
+                    "mirror-" +
+                    mirrorParticipantId,
+
+                targetId:
+                    mirrorParticipantId,
+
+                participantId:
+                    mirrorParticipantId,
+
+                media:
+                    "camera",
+
+                enabled:
+                    mirrorCameraOn
+
+            });
+
+            cameraButtonParticipant.textContent =
+                mirrorCameraOn
+                ? "📹 Camera ON"
+                : "📹 Camera OFF";
+
+            cameraButtonParticipant.classList.toggle(
+                "active",
+                mirrorCameraOn
+            );
+
+            await supabaseClient
+                .from("conference_participants")
+                .update({
+                    camera_on:
+                        mirrorCameraOn,
+
+                    updated_at:
+                        new Date().toISOString()
+                })
+                .eq(
+                    "id",
+                    mirrorParticipantId
+                );
+
+            return;
+        }
+
 
         if(!localStream){
             return;
