@@ -3289,24 +3289,28 @@ function initializeWebRTCSignaling(){
                  * administrator signal.
                  */
 
-                if(
-                    !isAdministrator &&
-                    signal.targetId ===
-                    window.myParticipantId
-                ){
+if(
+    !isAdministrator &&
+    signal.targetId ===
+    window.myParticipantId
+){
 
-                    console.log(
-    "ADMINISTRATOR RECEIVED PARTICIPANT SIGNAL:",
-    signal
-);
-                    
-                    await handleParticipantWebRTCSignal(
-                        signal
-                    );
+    console.log(
+        "PARTICIPANT RECEIVED ADMIN SIGNAL:",
+        signal
+    );
 
-                    return;
+    console.log(
+        "LOCK STATUS RECEIVED:",
+        signal.locked
+    );
 
-                }
+    await handleParticipantWebRTCSignal(
+        signal
+    );
+
+    return;
+}
 
 
                 /*
@@ -6235,6 +6239,15 @@ async function toggleMicLock(id){
 
     participant.micLocked =
         !participant.micLocked;
+
+    console.log(
+    "MIC LOCK CLICKED:",
+    {
+        participantId: id,
+        micLocked: participant.micLocked,
+        micOn: participant.micOn
+    }
+);
 
 
     /*
