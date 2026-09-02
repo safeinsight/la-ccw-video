@@ -3646,7 +3646,7 @@ if(
 
 
         micButtonParticipant.textContent =
-            "LOCKED";
+            "🔇 LOCKED";
 
         micButtonParticipant.classList.remove(
             "active"
@@ -6078,7 +6078,7 @@ function renderParticipants(){
                     <button
                         class="${
                             participant.micLocked
-                            ? "locked"
+                            ? "🔇 LOCKED"
                             : ""
                         }"
                         onclick="toggleMicLock('${participant.id}')"
@@ -7827,7 +7827,7 @@ micButtonParticipant.addEventListener(
 
         if(
             micButtonParticipant.textContent ===
-            "LOCKED"
+            "🔇 LOCKED"
         ){
             return;
         }
