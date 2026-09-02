@@ -3106,6 +3106,17 @@ function subscribeToMyParticipant(participantId){
                    participantMicLocked =
                     participant.mic_locked === true; 
 
+                    if(participantMicLocked){
+
+                    micButtonParticipant.textContent =
+                        "LOCKED";
+                
+                    micButtonParticipant.classList.remove(
+                        "active"
+                    );
+
+}
+
                     if(
                         participant.status ===
                         "approved"
