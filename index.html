@@ -6221,7 +6221,7 @@ async function toggleParticipantMic(id){
    LOCK MICROPHONE
 ========================================================= */
 
-function toggleMicLock(id){
+async function toggleMicLock(id){
 
     const participant =
         participants.find(
@@ -6254,8 +6254,7 @@ function toggleMicLock(id){
        lock state to the participant.
     */
 
-    sendWebRTCSignal({
-
+    await sendWebRTCSignal({
         type:
             "participant-media-control",
 
