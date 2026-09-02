@@ -3640,16 +3640,28 @@ if(
     );
 
 
+if(signal.locked){
+
+    micButtonParticipant.textContent =
+        "LOCKED";
+
+    micButtonParticipant.classList.remove(
+        "active"
+    );
+
+}else{
+
     micButtonParticipant.textContent =
         signal.enabled
         ? "🎤 Mic ON"
         : "🔇 Mic OFF";
 
-
     micButtonParticipant.classList.toggle(
         "active",
         signal.enabled
     );
+
+}
 
 
     console.log(
@@ -6176,9 +6188,7 @@ function toggleMicLock(id){
         );
 
     if(!participant){
-
         return;
-
     }
 
 
@@ -6198,9 +6208,87 @@ function toggleMicLock(id){
     }
 
 
-    updateParticipantTile(
+    /*
+       Send the microphone state AND the
+       lock state to the participant.
+    */
+
+    sendWebRTCSignal({
+
+        type:
+            "participant-media-control",
+
+        senderId:
+            "administrator",
+
+        targetId:
+            id,
+
+        participantId:
+            id,
+
+        media:
+            "microphone",
+
+        enabled:
+            participant.micOn,
+
+        locked:
+            participant.micLocked
+
+    });
+
+
+    /*
+       Save the lock state and microphone
+       state to Supabase.
+    */
+
+    supabaseClient
+        .from(
+            "conference_participants"
+        )
+        .update({
+
+            mic_locked:
+                participant.micLocked,
+
+            mic_on:
+                participant.micOn,
+
+            updated_at:
+                new Date().toISOString()
+
+        })
+        .eq(
+            "id",
+            id
+        )
+        .then(
+            function(result){
+
+                if(result.error){
+
+                    console.error(
+                        "MIC LOCK UPDATE ERROR:",
+                        result.error
+                    );
+
+                }
+
+            }
+        );
+
+
+    /*
+       Update the existing tile without
+       destroying the WebRTC video element.
+    */
+
+    updateParticipantTileStatus(
         participant
     );
+
 
     renderParticipants();
 
@@ -7681,6 +7769,13 @@ participantChatInput.addEventListener("keydown", function(event){ if(event.key =
 micButtonParticipant.addEventListener(
     "click",
     async function(){
+
+        if(
+            micButtonParticipant.textContent ===
+            "LOCKED"
+        ){
+            return;
+        }
 
         if(!localStream){
             return;
