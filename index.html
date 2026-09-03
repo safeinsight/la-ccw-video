@@ -2288,6 +2288,9 @@ let mirrorPeerConnection =
 let pendingMirrorIceCandidates =
     [];
 
+let participantScreenStream =
+    null;
+
 let webRTCSignalingReady =
     false;
     
@@ -2503,7 +2506,10 @@ const CUSTOM_ALERT_MESSAGES = {
         error => "Unable to leave the conference.\n\n" + error.message,
 
     leaveConfirm:
-        "Leave this conference?"
+        "Leave this conference?",
+
+    screenShareRequest:
+        "The Instructor wants to view your screen.\n\nClick Share Screen to choose what you want to share."
 };
 
 /* =========================================================
@@ -2597,6 +2603,147 @@ function showCustomConfirm(message){
             customAlertOk.addEventListener(
                 "click",
                 onConfirm
+            );
+
+            customAlertCancel.addEventListener(
+                "click",
+                onCancel
+            );
+
+            customAlertOk.focus();
+        }
+    );
+}
+
+async function showScreenShareRequest(){
+
+    return new Promise(
+        function(resolve){
+
+            customAlertMessage.textContent =
+                CUSTOM_ALERT_MESSAGES.screenShareRequest;
+
+            customAlertCancel.style.display =
+                "inline-block";
+
+            customAlertOk.textContent =
+                "Share Screen";
+
+            customAlertOverlay.classList.add(
+                "show"
+            );
+
+            customAlertOverlay.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+
+            async function onShareScreen(){
+
+                try{
+
+                    participantScreenStream =
+                        await navigator.mediaDevices.getDisplayMedia({
+                            video: true,
+                            audio: false
+                        });
+
+                    customAlertOverlay.classList.remove(
+                        "show"
+                    );
+
+                    customAlertOverlay.setAttribute(
+                        "aria-hidden",
+                        "true"
+                    );
+
+                    customAlertCancel.style.display =
+                        "none";
+
+                    customAlertOk.textContent =
+                        "OK";
+
+                    customAlertOk.removeEventListener(
+                        "click",
+                        onShareScreen
+                    );
+
+                    customAlertCancel.removeEventListener(
+                        "click",
+                        onCancel
+                    );
+
+                    resolve(true);
+
+                }catch(error){
+
+                    console.log(
+                        "Screen share was not granted:",
+                        error
+                    );
+
+                    customAlertOverlay.classList.remove(
+                        "show"
+                    );
+
+                    customAlertOverlay.setAttribute(
+                        "aria-hidden",
+                        "true"
+                    );
+
+                    customAlertCancel.style.display =
+                        "none";
+
+                    customAlertOk.textContent =
+                        "OK";
+
+                    customAlertOk.removeEventListener(
+                        "click",
+                        onShareScreen
+                    );
+
+                    customAlertCancel.removeEventListener(
+                        "click",
+                        onCancel
+                    );
+
+                    resolve(false);
+                }
+            }
+
+            function onCancel(){
+
+                customAlertOverlay.classList.remove(
+                    "show"
+                );
+
+                customAlertOverlay.setAttribute(
+                    "aria-hidden",
+                    "true"
+                );
+
+                customAlertCancel.style.display =
+                    "none";
+
+                customAlertOk.textContent =
+                    "OK";
+
+                customAlertOk.removeEventListener(
+                    "click",
+                    onShareScreen
+                );
+
+                customAlertCancel.removeEventListener(
+                    "click",
+                    onCancel
+                );
+
+                resolve(false);
+            }
+
+            customAlertOk.addEventListener(
+                "click",
+                onShareScreen
             );
 
             customAlertCancel.addEventListener(
@@ -3423,6 +3570,28 @@ if(
     await handleMirrorWebRTCSignal(
         signal
     );
+
+    return;
+}
+
+/*
+ * Participant receives
+ * administrator screen-share request.
+ */
+
+if(
+    !isAdministrator &&
+    signal.targetId ===
+    window.myParticipantId &&
+    signal.type === "screen-share-request"
+){
+
+    console.log(
+        "PARTICIPANT RECEIVED SCREEN SHARE REQUEST:",
+        signal
+    );
+
+    await showScreenShareRequest();
 
     return;
 }
@@ -7122,7 +7291,7 @@ if(existingTile){
 
 }
 
-function openParticipantMirror(participantId){
+async function openParticipantMirror(participantId){
 
     if(!isAdministrator){
         return;
@@ -7132,6 +7301,30 @@ function openParticipantMirror(participantId){
         return;
     }
 
+    /*
+     * Tell the participant that the
+     * administrator wants to view
+     * their screen.
+     */
+    await sendWebRTCSignal({
+
+        type:
+            "screen-share-request",
+
+        senderId:
+            "administrator",
+
+        targetId:
+            participantId,
+
+        participantId:
+            participantId
+    });
+
+    /*
+     * Open the administrator's
+     * mirror window.
+     */
     const mirrorUrl =
         window.location.origin +
         window.location.pathname +
