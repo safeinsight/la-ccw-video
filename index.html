@@ -2864,13 +2864,10 @@ function updateAdminCameraButton(text){
 
 function initializeApplication(){
 
-        if(isMirror){
-
-        initializeParticipantMirror();
-
-        return;
-
-    }
+if(isMirror && !isAdministrator){
+    initializeParticipantMirror();
+    return;
+}
 
     if(isAdministrator){
 
