@@ -7421,12 +7421,18 @@ if(existingTile){
                 }
             );
 
-            tile.addEventListener(
-    "dblclick",
-    function(){
+tile.addEventListener(
+    "click",
+    function(event){
+
+        if(event.detail !== 2){
+            return;
+        }
+
         openParticipantMirror(
             participant.id
         );
+
     }
 );
 
