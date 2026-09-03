@@ -2738,11 +2738,15 @@ async function showScreenShareRequest(
 
                 try{
 
-                    participantScreenStream =
-                        await navigator.mediaDevices.getDisplayMedia({
-                            video: true,
-                            audio: false
-                        });
+            participantScreenStream =
+                await navigator.mediaDevices.getDisplayMedia({
+                    video: {
+                        displaySurface: "window"
+                    },
+                    audio: false,
+                    selfBrowserSurface: "exclude",
+                    monitorTypeSurfaces: "include"
+        });
 
                     const screenTrack =
                         participantScreenStream.getVideoTracks()[0];
