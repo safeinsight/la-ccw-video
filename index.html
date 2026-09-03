@@ -2653,12 +2653,6 @@ async function showScreenShareRequest(
                     const screenTrack =
                         participantScreenStream.getVideoTracks()[0];
 
-                    await sendWebRTCSignal({
-                        type: "screen-share-ready",
-                        senderId: window.myParticipantId,
-                        targetId: "mirror-" + /* participant ID used by this request */,
-                        participantId: window.myParticipantId
-                    });
                     
                     if(screenTrack){
                     
