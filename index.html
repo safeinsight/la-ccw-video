@@ -2615,7 +2615,9 @@ function showCustomConfirm(message){
     );
 }
 
-async function showScreenShareRequest(){
+async function showScreenShareRequest(
+    participantId
+){
 
     return new Promise(
         function(resolve){
@@ -2650,6 +2652,13 @@ async function showScreenShareRequest(){
 
                     const screenTrack =
                         participantScreenStream.getVideoTracks()[0];
+
+                    await sendWebRTCSignal({
+                        type: "screen-share-ready",
+                        senderId: window.myParticipantId,
+                        targetId: "mirror-" + /* participant ID used by this request */,
+                        participantId: window.myParticipantId
+                    });
                     
                     if(screenTrack){
                     
@@ -2668,6 +2677,13 @@ async function showScreenShareRequest(){
                         );
                     
                     }
+
+                    await sendWebRTCSignal({
+                        type: "screen-share-ready",
+                        senderId: window.myParticipantId,
+                        targetId: "mirror-" + participantId,
+                        participantId: window.myParticipantId
+});
 
                     customAlertOverlay.classList.remove(
                         "show"
@@ -3059,43 +3075,6 @@ function initializeParticipantMirror(){
 
             });
 
-if(webRTCSignalingReady){
-
-    startParticipantMirrorWebRTC(
-        mirrorParticipantId
-    );
-
-}else{
-
-    console.log(
-        "Mirror waiting for WebRTC signaling to become ready..."
-    );
-
-    const waitForSignaling =
-        setInterval(
-            function(){
-
-                if(webRTCSignalingReady){
-
-                    clearInterval(
-                        waitForSignaling
-                    );
-
-                    console.log(
-                        "Mirror WebRTC signaling is ready. Starting mirror connection."
-                    );
-
-                    startParticipantMirrorWebRTC(
-                        mirrorParticipantId
-                    );
-
-                }
-
-            },
-            50
-        );
-
-}
 
     }
 
@@ -3571,6 +3550,34 @@ if(
 
 /*
  * Mirror receives
+ * participant screen-share approval.
+ */
+if(
+    isMirror &&
+    signal.targetId ===
+    "mirror-" + mirrorParticipantId &&
+    signal.type === "screen-share-ready"
+){
+
+    console.log(
+        "MIRROR RECEIVED SCREEN SHARE READY:",
+        signal
+    );
+
+    if(webRTCSignalingReady){
+
+        await startParticipantMirrorWebRTC(
+            mirrorParticipantId
+        );
+
+    }
+
+    return;
+}
+
+
+/*
+ * Mirror receives
  * participant WebRTC signal.
  */
 if(
@@ -3612,7 +3619,9 @@ if(
         signal
     );
 
-    await showScreenShareRequest();
+            await showScreenShareRequest(
+            signal.participantId
+        );
 
     return;
 }
@@ -4076,14 +4085,7 @@ async function handleParticipantMirrorWebRTCSignal(
             signal
         );
 
-        if(!localStream){
 
-            console.error(
-                "Cannot create mirror connection: localStream does not exist."
-            );
-
-            return;
-        }
 
         if(mirrorPeerConnection){
 
