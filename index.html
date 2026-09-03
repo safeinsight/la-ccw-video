@@ -9062,6 +9062,36 @@ async function loadConferenceParticipants(){
         "Participant state restored."
     );
 
+/*
+ * Reconnect WebRTC for participants
+ * who were already approved when the
+ * administrator refreshed the page.
+ */
+if(participants.length){
+
+    while(!webRTCSignalingReady){
+
+        await new Promise(
+            resolve => setTimeout(resolve, 50)
+        );
+
+    }
+
+    await initializeAdministratorMedia();
+
+    for(
+        const participant
+        of participants
+    ){
+
+        await createAdminPeerConnection(
+            participant.id
+        );
+
+    }
+
+}
+
 }
 
 /* =========================================================
