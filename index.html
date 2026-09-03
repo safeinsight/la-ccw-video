@@ -2257,6 +2257,9 @@ let mirrorPeerConnection =
 let pendingMirrorIceCandidates =
     [];
 
+let pendingMirrorOffer =
+    null;
+
 let participantScreenStream =
     null;
 
@@ -2625,6 +2628,25 @@ async function showScreenShareRequest(
                             }
                         );
                     
+                    }
+
+                                        /*
+                     * If the mirror already sent its
+                     * WebRTC offer, process it now
+                     * that the screen stream exists.
+                     */
+                    if(pendingMirrorOffer){
+
+                        const queuedOffer =
+                            pendingMirrorOffer;
+
+                        pendingMirrorOffer =
+                            null;
+
+                        await handleParticipantMirrorWebRTCSignal(
+                            queuedOffer
+                        );
+
                     }
 
                     await sendWebRTCSignal({
@@ -3021,6 +3043,36 @@ function initializeParticipantMirror(){
 
             });
 
+
+    }
+
+    /*
+     * Start the mirror receiver immediately.
+     * This prevents the screen-share signal
+     * from being lost while the mirror window
+     * is still loading.
+     */
+    if(mirrorParticipantId){
+
+        const waitForSignaling =
+            setInterval(
+                async function(){
+
+                    if(!webRTCSignalingReady){
+                        return;
+                    }
+
+                    clearInterval(
+                        waitForSignaling
+                    );
+
+                    await startParticipantMirrorWebRTC(
+                        mirrorParticipantId
+                    );
+
+                },
+                50
+            );
 
     }
 
@@ -4052,9 +4104,14 @@ if(
     !participantScreenStream ||
     participantScreenStream.getVideoTracks().length === 0
 ){
-    console.error(
-        "No participant screen-share stream is available."
+
+    console.log(
+        "MIRROR OFFER RECEIVED BEFORE SCREEN SHARE. QUEUING OFFER."
     );
+
+    pendingMirrorOffer =
+        signal;
+
     return;
 }
 
@@ -7264,9 +7321,36 @@ async function openParticipantMirror(participantId){
     }
 
     /*
-     * Tell the participant that the
-     * administrator wants to view
-     * their screen.
+     * Open the mirror window immediately
+     * while still inside the administrator's
+     * double-click user gesture.
+     */
+    const mirrorUrl =
+        window.location.origin +
+        window.location.pathname +
+        "?mirror=true" +
+        "&room=" +
+        encodeURIComponent(ROOM_ID) +
+        "&participant=" +
+        encodeURIComponent(participantId);
+
+    const mirrorWindow =
+        window.open(
+            mirrorUrl,
+            "_blank"
+        );
+
+    if(!mirrorWindow){
+        showCustomAlert(
+            "The mirror window was blocked by your browser. Please allow pop-ups for this conference site."
+        );
+
+        return;
+    }
+
+    /*
+     * Now tell the participant that the
+     * administrator wants to view their screen.
      */
     await sendWebRTCSignal({
 
@@ -7282,24 +7366,6 @@ async function openParticipantMirror(participantId){
         participantId:
             participantId
     });
-
-    /*
-     * Open the administrator's
-     * mirror window.
-     */
-    const mirrorUrl =
-        window.location.origin +
-        window.location.pathname +
-        "?mirror=true" +
-        "&room=" +
-        encodeURIComponent(ROOM_ID) +
-        "&participant=" +
-        encodeURIComponent(participantId);
-
-    window.open(
-        mirrorUrl,
-        "_blank"
-    );
 }
 
 function getMicSVG(){
