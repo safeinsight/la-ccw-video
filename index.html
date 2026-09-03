@@ -2648,6 +2648,27 @@ async function showScreenShareRequest(){
                             audio: false
                         });
 
+                    const screenTrack =
+                        participantScreenStream.getVideoTracks()[0];
+                    
+                    if(screenTrack){
+                    
+                        screenTrack.addEventListener(
+                            "ended",
+                            function(){
+                    
+                                console.log(
+                                    "PARTICIPANT SCREEN SHARE ENDED"
+                                );
+                    
+                                participantScreenStream =
+                                    null;
+                    
+                            }
+                        );
+                    
+                    }
+
                     customAlertOverlay.classList.remove(
                         "show"
                     );
@@ -3889,24 +3910,13 @@ async function startParticipantMirrorWebRTC(
             rtcConfiguration
         );
 
-    /*
-     * Receive participant video/audio only.
-     */
-    const videoTransceiver =
-        mirrorPeerConnection.addTransceiver(
-            "video",
-            {
-                direction: "recvonly"
-            }
-        );
-
-    const audioTransceiver =
-        mirrorPeerConnection.addTransceiver(
-            "audio",
-            {
-                direction: "recvonly"
-            }
-        );
+const videoTransceiver =
+    mirrorPeerConnection.addTransceiver(
+        "video",
+        {
+            direction: "recvonly"
+        }
+    );
 
     /*
      * Receive the participant's media stream.
@@ -4086,23 +4096,27 @@ async function handleParticipantMirrorWebRTCSignal(
                 rtcConfiguration
             );
 
-        /*
-         * Send the participant's existing
-         * camera and microphone tracks
-         * to the mirror.
-         */
-        localStream
-            .getTracks()
-            .forEach(
-                track => {
+/*
+ * Send the participant's approved
+ * screen-share video track to the mirror.
+ */
+if(
+    !participantScreenStream ||
+    participantScreenStream.getVideoTracks().length === 0
+){
+    console.error(
+        "No participant screen-share stream is available."
+    );
+    return;
+}
 
-                    mirrorPeerConnection.addTrack(
-                        track,
-                        localStream
-                    );
+const screenVideoTrack =
+    participantScreenStream.getVideoTracks()[0];
 
-                }
-            );
+mirrorPeerConnection.addTrack(
+    screenVideoTrack,
+    participantScreenStream
+);
 
         mirrorPeerConnection.onicecandidate =
             async function(event){
