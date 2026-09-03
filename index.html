@@ -2287,6 +2287,9 @@ let mirrorPeerConnection =
 
 let pendingMirrorIceCandidates =
     [];
+
+let webRTCSignalingReady =
+    false;
     
 let mirrorCameraOn =
     true;
@@ -2888,9 +2891,43 @@ function initializeParticipantMirror(){
 
             });
 
-        startParticipantMirrorWebRTC(
-            mirrorParticipantId
+if(webRTCSignalingReady){
+
+    startParticipantMirrorWebRTC(
+        mirrorParticipantId
+    );
+
+}else{
+
+    console.log(
+        "Mirror waiting for WebRTC signaling to become ready..."
+    );
+
+    const waitForSignaling =
+        setInterval(
+            function(){
+
+                if(webRTCSignalingReady){
+
+                    clearInterval(
+                        waitForSignaling
+                    );
+
+                    console.log(
+                        "Mirror WebRTC signaling is ready. Starting mirror connection."
+                    );
+
+                    startParticipantMirrorWebRTC(
+                        mirrorParticipantId
+                    );
+
+                }
+
+            },
+            50
         );
+
+}
 
     }
 
@@ -3443,14 +3480,26 @@ if(
         .subscribe(
 
             
-            function(status){
+function(status){
 
-                console.log(
-                    "WebRTC signaling status:",
-                    status
-                );
+    console.log(
+        "WebRTC signaling status:",
+        status
+    );
 
-            }
+
+    if(status === "SUBSCRIBED"){
+
+        webRTCSignalingReady =
+            true;
+
+        console.log(
+            "WEBRTC SIGNALING READY"
+        );
+
+    }
+
+}
         );
 
 }
