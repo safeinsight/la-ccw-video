@@ -5347,31 +5347,76 @@ function closeParticipantWebRTC(
     participantId
 ){
 
-    const peerConnection =
-        adminPeerConnections.get(
-            participantId
-        );
-
-
-    if(!peerConnection){
-
-        return;
-
-    }
-
-
     console.log(
         "Closing administrator WebRTC connection:",
         participantId
     );
 
+    /*
+     * Find the participant's administrator tile
+     * BEFORE closing the connection.
+     */
+    const tile =
+        document.querySelector(
+            `.videoTile[data-participant-id="${participantId}"]`
+        );
 
-    peerConnection.close();
+    /*
+     * Immediately stop and detach ANY video element
+     * belonging to this participant.
+     */
+    if(tile){
 
+        const videos =
+            tile.querySelectorAll(
+                "video"
+            );
 
-    adminPeerConnections.delete(
-        participantId
-    );
+        videos.forEach(
+            function(video){
+
+                video.pause();
+
+                video.srcObject =
+                    null;
+
+                video.removeAttribute(
+                    "src"
+                );
+
+                video.load();
+
+            }
+        );
+
+    }
+
+    /*
+     * Now close the WebRTC connection.
+     */
+    const peerConnection =
+        adminPeerConnections.get(
+            participantId
+        );
+
+    if(peerConnection){
+
+        peerConnection.ontrack =
+            null;
+
+        peerConnection.onicecandidate =
+            null;
+
+        peerConnection.onconnectionstatechange =
+            null;
+
+        peerConnection.close();
+
+        adminPeerConnections.delete(
+            participantId
+        );
+
+    }
 
 }
 
@@ -8030,33 +8075,36 @@ function clearParticipantTile(
 ){
 
     /*
-     * IMPORTANT:
-     * Completely detach the participant's WebRTC
-     * stream before replacing the tile contents.
+     * Completely destroy every video element
+     * currently inside this tile.
      */
-    const participantVideo =
-        tile.querySelector(
-            ".participantRemoteVideo"
+    const videos =
+        tile.querySelectorAll(
+            "video"
         );
 
-    if(participantVideo){
+    videos.forEach(
+        function(video){
 
-        /*
-         * Stop playback immediately.
-         */
-        participantVideo.pause();
+            video.pause();
 
-        /*
-         * Detach the MediaStream from the video element.
-         */
-        participantVideo.srcObject =
-            null;
+            video.srcObject =
+                null;
 
-    }
+            video.removeAttribute(
+                "src"
+            );
+
+            video.load();
+
+            video.remove();
+
+        }
+    );
 
     /*
      * Remove the participant ID so this tile
-     * is now considered empty.
+     * is immediately considered empty.
      */
     tile.removeAttribute(
         "data-participant-id"
@@ -8069,11 +8117,9 @@ function clearParticipantTile(
         "videoTile empty";
 
     tile.innerHTML = `
-
         <div class="tileLabel">
             Waiting for Participant
         </div>
-
     `;
 }
 
