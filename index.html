@@ -5949,14 +5949,46 @@ if(
     participant.status === "left"
 ){
 
-    if(index !== -1){
-
-        participants.splice(
-            index,
-            1
+    /*
+     * Immediately remove this participant from the
+     * administrator's active participant array.
+     *
+     * Use String comparison so the removal works
+     * regardless of whether the IDs arrive as strings
+     * or another equivalent type.
+     */
+    participants =
+        participants.filter(
+            p =>
+                String(p.id) !==
+                String(participant.id)
         );
 
-    }
+    /*
+     * IMMEDIATELY remove the participant's control-panel
+     * entry from the administrator view.
+     */
+    document
+        .querySelectorAll(
+            ".participantControl[data-participant-id]"
+        )
+        .forEach(
+            control => {
+
+                if(
+                    String(
+                        control.dataset.participantId
+                    ) === String(
+                        participant.id
+                    )
+                ){
+
+                    control.remove();
+
+                }
+
+            }
+        );
 
     delete adminChatThreads[String(participant.id)];
 
