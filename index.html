@@ -6037,9 +6037,6 @@ if(
 
     delete adminChatThreads[String(participant.id)];
 
-adminSelectedChatParticipants.delete(
-    String(participant.id)
-);
 
 if(openAdminChatThread === String(participant.id)){
     openAdminChatThread = null;
@@ -6465,9 +6462,6 @@ closeParticipantWebRTC(
      */
     delete adminChatThreads[String(id)];
 
-    adminSelectedChatParticipants.delete(
-        String(id)
-    );
 
     if(openAdminChatThread === String(id)){
 
