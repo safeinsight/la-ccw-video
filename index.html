@@ -6000,7 +6000,14 @@ if(openAdminChatThread === String(participant.id)){
     openAdminChatThread = null;
 }
 
-
+    /*
+     * Close the participant's WebRTC connection
+     * immediately when they leave.
+     */
+    closeParticipantWebRTC(
+        participant.id
+    );
+    
     /*
      * Clear the participant's video tile.
      */
@@ -8022,10 +8029,42 @@ function clearParticipantTile(
     tile
 ){
 
+    /*
+     * IMPORTANT:
+     * Completely detach the participant's WebRTC
+     * stream before replacing the tile contents.
+     */
+    const participantVideo =
+        tile.querySelector(
+            ".participantRemoteVideo"
+        );
+
+    if(participantVideo){
+
+        /*
+         * Stop playback immediately.
+         */
+        participantVideo.pause();
+
+        /*
+         * Detach the MediaStream from the video element.
+         */
+        participantVideo.srcObject =
+            null;
+
+    }
+
+    /*
+     * Remove the participant ID so this tile
+     * is now considered empty.
+     */
     tile.removeAttribute(
         "data-participant-id"
     );
 
+    /*
+     * Reset the tile to its empty state.
+     */
     tile.className =
         "videoTile empty";
 
@@ -8036,7 +8075,6 @@ function clearParticipantTile(
         </div>
 
     `;
-
 }
 
 
