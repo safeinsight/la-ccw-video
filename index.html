@@ -1073,22 +1073,30 @@ input {
 
 #micButtonParticipant {
     left:10px;
-    top:10px;
+    top:40%;
+    transform:translateY(-50%);
+    width:125px;
 }
 
 #cameraButtonParticipant {
     left:10px;
-    bottom:10px;
+    top:40%;
+    transform:translateY(calc(-50% + 50px));
+    width:125px;
 }
 
 #scheduleButtonParticipant {
-    right:10px;
-    top:10px;
+    left:10px;
+    top:40%;
+    transform:translateY(calc(-50% - 50px));
+    width:125px;
 }
 
 #leaveButtonParticipant {
-    right:10px;
-    bottom:10px;
+    left:10px;
+    top:40%;
+    transform:translateY(calc(-50% + 100px));
+    width:125px;
 }
 
 #participantChatPanel {
@@ -1279,10 +1287,32 @@ input {
 ========================================================= */
 
 /* Desktop / landscape */
-@media (orientation:landscape), (min-width:901px) {
+@media (orientation:landscape) and (min-width:901px) {
 
     #participantView {
         flex-direction:row;
+    }
+
+        #participantLeft {
+        width:34%;
+    }
+
+        #header {
+        width:34%;
+    }
+
+    #participantLocalVideo {
+        left:calc(50% + 70px);
+    }
+
+    /* Expanded Training iframe */
+    #participantBrowserFrame {
+        position:fixed;
+        top:0;
+        right:0;
+        width:66vw;
+        height:100dvh;
+        z-index:300;
     }
 
 }
@@ -1306,8 +1336,37 @@ input {
 
     #participantVideoControls .toolbarButton {
         min-width:78px;
+        width:auto;
         padding:8px 6px;
         font-size:11px;
+    }
+
+        #micButtonParticipant {
+        left:10px;
+        top:10px;
+        transform:none;
+    }
+
+    #cameraButtonParticipant {
+        left:10px;
+        bottom:10px;
+        top:auto;
+        transform:none;
+    }
+
+    #scheduleButtonParticipant {
+        right:10px;
+        left:auto;
+        top:10px;
+        transform:none;
+    }
+
+    #leaveButtonParticipant {
+        right:10px;
+        left:auto;
+        bottom:10px;
+        top:auto;
+        transform:none;
     }
 
     #participantView {
@@ -1798,9 +1857,6 @@ body.mirrorMode #app {
             alt="Safe Insight"
         >
 
-        <div id="conferenceTitle">
-            CCW Conference
-        </div>
 
         <div id="connectionStatus">
             ● Ready
@@ -3065,7 +3121,7 @@ async function initializeAdministratorMedia(){
             await navigator.mediaDevices.getUserMedia({
 
                 video:
-                    true,
+                    false,
 
                 audio:
                     true
@@ -7500,17 +7556,11 @@ if(existingTile){
             );
 
 tile.addEventListener(
-    "click",
-    function(event){
-
-        if(event.detail !== 2){
-            return;
-        }
-
+    "dblclick",
+    function(){
         openParticipantMirror(
             participant.id
         );
-
     }
 );
 
@@ -7536,7 +7586,7 @@ tile.addEventListener(
 
 }
 
-async function openParticipantMirror(participantId){
+function openParticipantMirror(participantId){
 
     if(!isAdministrator){
         return;
@@ -7578,7 +7628,7 @@ async function openParticipantMirror(participantId){
      * Now tell the participant that the
      * administrator wants to view their screen.
      */
-    await sendWebRTCSignal({
+    sendWebRTCSignal({
 
         type:
             "screen-share-request",
@@ -8049,14 +8099,14 @@ function updateParticipantTileStatus(
      * based on current microphone status.
      */
     
-        if(adminButtons.length >= 3){
-        
-            adminButtons[2].textContent =
-                participant.micLocked
-                ? "🔓 Unlock Mic"
-                : "🔒 Lock Mic";
-        
-        }
+if(adminButtons.length >= 3){
+
+    adminButtons[2].textContent =
+        participant.micLocked
+        ? "🔓 Unlock Mic"
+        : "🔒 Lock Mic";
+
+}
 
 }
 
