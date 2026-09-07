@@ -8606,7 +8606,8 @@ function initializeChat(){
 adminChatThreads[senderId].push({
     mine:false,
     senderName:message.senderName || "Participant",
-    text:message.text
+    text:message.text,
+    sentAt:message.sentAt
 });
 
 playAdminChatNotification();
@@ -8621,9 +8622,17 @@ if(chatTile){
 }
 
                     
-            appendChatMessage(adminChatMessages, false, message.senderName || "Participant", message.text);
+appendChatMessage(
+    adminChatMessages,
+    false,
+    message.senderName || "Participant",
+    message.text,
+    message.sentAt
+);
+                    
             renderAdminChatRecipients();
         }
+                
 }else{
 
     if(
@@ -8634,7 +8643,8 @@ if(chatTile){
             participantChatMessages,
             message.senderId === window.myParticipantId,
             message.senderName || "Administrator",
-            message.text
+            message.text,
+            message.sentAt
         );
 
 if(message.senderId === "ADMIN"){
@@ -8653,13 +8663,57 @@ if(message.senderId === "ADMIN"){
         .subscribe(function(status){ console.log("Chat channel:", status); });
 }
 
-function appendChatMessage(container, mine, senderName, text){
-    if(!container){ return; }
-    const div = document.createElement("div");
-    div.className = "chatMessage" + (mine ? " mine" : "");
-    div.innerHTML = `<div class="chatMessageMeta">${escapeHtml(senderName)}</div><div>${escapeHtml(text)}</div>`;
+function appendChatMessage(
+    container,
+    mine,
+    senderName,
+    text,
+    sentAt
+){
+    if(!container){
+        return;
+    }
+
+    const div =
+        document.createElement("div");
+
+    div.className =
+        "chatMessage" +
+        (mine ? " mine" : "");
+
+    let timestamp = "";
+
+    if(sentAt){
+
+        const date =
+            new Date(sentAt);
+
+        timestamp =
+            date.toLocaleTimeString(
+                [],
+                {
+                    hour:"numeric",
+                    minute:"2-digit"
+                }
+            );
+
+    }
+
+    div.innerHTML =
+        `<div class="chatMessageMeta">
+            ${escapeHtml(senderName)}
+            ${
+                timestamp
+                ? `<span class="chatMessageTime">${timestamp}</span>`
+                : ""
+            }
+        </div>
+        <div>${escapeHtml(text)}</div>`;
+
     container.appendChild(div);
-    container.scrollTop = container.scrollHeight;
+
+    container.scrollTop =
+        container.scrollHeight;
 }
 
 function renderAdminChatRecipients(){
@@ -8843,14 +8897,15 @@ function renderAdminChatMessages(){
         allMessages.forEach(
             function(message){
 
-                appendChatMessage(
-                    adminChatMessages,
-                    message.mine,
-                    message.mine
-                        ? "Administrator"
-                        : message.senderName,
-                    message.text
-                );
+        appendChatMessage(
+            adminChatMessages,
+            message.mine,
+            message.mine
+                ? "Administrator"
+                : message.senderName,
+            message.text,
+            message.sentAt
+        );
 
             }
         );
@@ -8877,14 +8932,15 @@ function renderAdminChatMessages(){
     messages.forEach(
         function(message){
 
-            appendChatMessage(
-                adminChatMessages,
-                message.mine,
-                message.mine
-                    ? "Administrator"
-                    : message.senderName,
-                message.text
-            );
+        appendChatMessage(
+            adminChatMessages,
+            message.mine,
+            message.mine
+                ? "Administrator"
+                : message.senderName,
+            message.text,
+            message.sentAt
+        );
 
         }
     );
@@ -8964,11 +9020,12 @@ adminChatSend.addEventListener(
                     adminChatThreads[id] = [];
                 }
 
-                adminChatThreads[id].push({
-                    mine:true,
-                    senderName:"Administrator",
-                    text:text
-                });
+            adminChatThreads[id].push({
+                mine:true,
+                senderName:"Administrator",
+                text:text,
+                sentAt:new Date().toISOString()
+            });
 
             }
 
@@ -9004,7 +9061,8 @@ adminChatSend.addEventListener(
             adminChatThreads[id].push({
                 mine:true,
                 senderName:"Administrator",
-                text:text
+                text:text,
+                sentAt:new Date().toISOString()
             });
 
         }
@@ -9024,7 +9082,13 @@ participantChatSend.addEventListener("click", async function(){
     const text = participantChatInput.value.trim();
     if(!text || !chatChannel || !window.myParticipantId){ return; }
     await chatChannel.send({ type:"broadcast", event:"chat", payload:{ roomId:ROOM_ID, senderId:window.myParticipantId, senderName:nameInput.value.trim() || "Participant", recipientId:"ADMIN", text:text, sentAt:new Date().toISOString() } });
-    appendChatMessage(participantChatMessages, true, "You", text);
+appendChatMessage(
+    participantChatMessages,
+    true,
+    "You",
+    text,
+    new Date().toISOString()
+);
     participantChatInput.value = "";
 });
 
