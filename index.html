@@ -7160,9 +7160,9 @@ function renderParticipants(){
                         onclick="toggleMicLock('${participant.id}')"
                     >
                         ${
-                            participant.micOn
-                            ? "🔒 Lock Mic"
-                            : "Unlock Mic"
+                            participant.micLocked
+                            ? "🔓 Unlock Mic"
+                            : "🔒 Lock Mic"
                         }
                     </button>
 
@@ -7906,9 +7906,9 @@ if(participant.cameraOn){
                 onclick="toggleMicLock('${participant.id}')"
             >
                 ${
-                    participant.micOn
-                    ? "🔒 Lock Mic"
-                    : "Unlock Mic"
+                    participant.micLocked
+                    ? "🔓 Unlock Mic"
+                    : "🔒 Lock Mic"
                 }
             </button>
 
@@ -8049,14 +8049,14 @@ function updateParticipantTileStatus(
      * based on current microphone status.
      */
     
-    if(adminButtons.length >= 3){
-    
-        adminButtons[2].textContent =
-            participant.micOn
-            ? "🔒 Lock Mic"
-            : "Unlock Mic";
-    
-    }
+        if(adminButtons.length >= 3){
+        
+            adminButtons[2].textContent =
+                participant.micLocked
+                ? "🔓 Unlock Mic"
+                : "🔒 Lock Mic";
+        
+        }
 
 }
 
