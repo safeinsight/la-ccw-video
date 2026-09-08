@@ -2620,6 +2620,9 @@ const CUSTOM_ALERT_MESSAGES = {
 
         participantChat:
         "The Instructor sent you a chat message.",
+        
+        adminParticipantChat:
+        name => name + " sent you a chat message.",
 
         participantKnock:
         name => name + " is requesting to enter the conference.",
@@ -8325,6 +8328,33 @@ let chatChannel = null;
 let adminChatThreads = {};
 let openAdminChatThread = "ALL";
 
+const NORMAL_PAGE_TITLE = document.title;
+
+let browserTabAlertActive = false;
+
+function activateBrowserTabAlert(){
+
+    if(browserTabAlertActive){
+        return;
+    }
+
+    browserTabAlertActive = true;
+
+    document.title =
+        "🟡 " + NORMAL_PAGE_TITLE;
+
+}
+
+
+function clearBrowserTabAlert(){
+
+    browserTabAlertActive = false;
+
+    document.title =
+        NORMAL_PAGE_TITLE;
+
+}
+
 function playAdminChatNotification(){
 
     try{
@@ -8615,6 +8645,14 @@ adminChatThreads[senderId].push({
 });
 
 playAdminChatNotification();
+
+showCustomAlert(
+    CUSTOM_ALERT_MESSAGES.adminParticipantChat(
+        message.senderName || "Participant"
+    )
+);
+
+activateBrowserTabAlert();
 
 const chatTile = document.querySelector(
     `.videoTile[data-participant-id="${senderId}"]`
@@ -8954,7 +8992,9 @@ function renderAdminChatMessages(){
 adminChatButton.addEventListener(
     "click",
     function(){
-
+        
+clearBrowserTabAlert();
+        
         if(
             adminChatPanel.style.display === "flex"
         ){
