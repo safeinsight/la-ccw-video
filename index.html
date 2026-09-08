@@ -8664,16 +8664,26 @@ if(chatTile){
 }
 
                     
-appendChatMessage(
-    adminChatMessages,
-    false,
-    message.senderName || "Participant",
-    message.text,
-    message.sentAt
-);
-                    
-            renderAdminChatRecipients();
-        }
+/*
+ * Only update the visible chat window
+ * if the administrator is viewing:
+ *
+ * 1. Chat All Users
+ * OR
+ * 2. The participant who sent the message
+ */
+
+if(
+    openAdminChatThread === "ALL" ||
+    openAdminChatThread === senderId
+){
+
+    renderAdminChatMessages();
+
+}
+
+renderAdminChatRecipients();
+}
                 
 }else{
 
